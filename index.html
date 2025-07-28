@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>色词匹配小游戏</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap');
+
+        :root {
+            --bg-color: #1a1c20;
+            --text-color: #e0e0e0;
+            --primary-blue: #4a90e2;
+            --button-blue-bg: #2a3c5a;
+            --button-blue-border: #4a90e2;
+            --button-grey-bg: #4a4e58;
+        }
+
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* --- 主容器：用于承载背景图并作为定位的基准 --- */
+        .screen-container {
+            position: relative; /* 关键：让所有子元素的绝对定位相对于我 */
+            width: 90vw;
+            max-width: 1200px; /* 限制最大宽度 */
+            aspect-ratio: 1200 / 750; /* 关键：保持和背景图一样的宽高比 */
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        #welcome-screen {
+            background-image: url('assets/01.png');
+        }
+
+        #game-screen {
+            background-image: url('assets/02.png');
+        }
+        
+        /* --- 绝对定位的UI元素 --- */
+
+        /* 欢迎页元素 */
+        #emoji-gif {
+            position: absolute;
+            width: 15%; /* 相对于容器宽度 */
+            top: 40%;
+            left: 75%;
+            transform: translate(-50%, -50%); /* 精准居中 */
+        }
+        
+        #start-game-btn {
+            position: absolute;
+            width: 20%;
+            height: 9%;
+            background-color: var(--primary-blue);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 2.2vw; /* 字体大小随视口变化 */
+            font-weight: bold;
+            cursor: pointer;
+            top: 60%;
+            left: 75%;
+            transform: translate(-50%, -50%);
+            transition: transform 0.2s;
+        }
+        #start-game-btn:hover {
+            transform: translate(-50%, -50%) scale(1.05);
+        }
+
+        /* 游戏页元素 */
+        #progress-bar-container {
+            position: absolute;
+            width: 53.5%;
+            height: 3%;
+            top: 9.3%;
+            left: 11.8%;
+            background-color: #3e3e3e;
+            border-radius: 99px;
+            overflow: hidden;
+        }
+
+        #progress-bar {
+            width: 100%; /* 初始为满 */
+            height: 100%;
+            background-color: var(--primary-blue);
+            border-radius: 99px;
+            transition: width 0.5s linear; /* 线性变化更平滑 */
+        }
+
+        #timer-display {
+            position: absolute;
+            color: white;
+            font-size: 2.5vw;
+            font-weight: bold;
+            top: 8%;
+            left: 67%;
+        }
+
+        #stimulus-box {
+            position: absolute;
+            width: 59%;
+            height: 62.5%;
+            top: 54%;
+            left: 35.5%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: bold;
+            font-size: 10vw;
+        }
+
+        .feedback-image {
+            width: 25%; /* 反馈图大小相对于stimulus-box */
+        }
+        
+        #stimulus-word {
+            position: absolute;
+            width: 20%;
+            height: 30%;
+            top: 55%;
+            left: 17%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .stimulus-text-container {
+             position: absolute;
+             top: 40%;
+             left: 45%;
+             color: white;
+             font-size: 1.8vw;
+        }
+        
+        #answer-buttons {
+            position: absolute;
+            display: flex;
+            justify-content: center;
+            gap: 1.5%; /* 按钮间距 */
+            width: 50%;
+            top: 55%;
+            left: 45%;
+        }
+
+        .answer-btn {
+            flex-grow: 1;
+            padding: 2% 0; /* 用百分比做padding */
+            background-color: var(--button-blue-bg);
+            border: 2px solid var(--button-blue-border);
+            color: var(--text-color);
+            font-size: 1.8vw;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .answer-btn:hover {
+            background-color: #3b527c;
+        }
+        
+        #stats-panel {
+            position: absolute;
+            width: 20%;
+            top: 25%;
+            left: 81%;
+            color: white;
+            font-size: 1.8vw;
+            line-height: 2.5;
+        }
+        
+        .stats-panel p {
+            margin: 0;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        #end-game-btn {
+            position: absolute;
+            width: 18%;
+            height: 9%;
+            top: 75%;
+            left: 81%;
+            background-color: var(--button-grey-bg);
+            color: var(--text-color);
+            border: none;
+            border-radius: 12px;
+            font-size: 1.8vw;
+            cursor: pointer;
+        }
+        
+        /* 针对特别小的屏幕做字体大小保护 */
+        @media (max-width: 600px) {
+            #start-game-btn, .answer-btn, #stats-panel, #end-game-btn, .stimulus-text-container, #timer-display {
+                font-size: 12px !important;
+            }
+            #stimulus-box {
+                font-size: 48px !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="welcome-screen" class="screen-container">
+        <img id="emoji-gif" src="assets/emoji.gif" alt="Emoji">
+        <button id="start-game-btn">开始游戏</button>
+    </div>
+
+    <div id="game-screen" class="screen-container hidden">
+        <!-- 进度条和时间显示 -->
+        <div id="progress-bar-container"><div id="progress-bar"></div></div>
+        <span id="timer-display">02:00</span>
+
+        <!-- 刺激和反馈区域 (合并)-->
+        <div id="stimulus-box"></div>
+        
+        <!-- 游戏主要内容 -->
+        <div id="stimulus-word"></div>
+        <p class="stimulus-text-container">这个字的颜色是</p>
+        <div id="answer-buttons"></div>
+
+        <!-- 侧边栏 -->
+        <div id="stats-panel">
+            <p><span>次数:</span> <span id="trial-count">0</span></p>
+            <p><span>准确率:</span> <span id="accuracy">N/A</span></p>
+            <p><span>平均反应时间:</span> <span id="avg-rt">N/A</span></p>
+        </div>
+        <button id="end-game-btn">结束游戏</button>
+    </div>
+
+    <script>
+        const GAME_DURATION_SECONDS = 120;
+        const FEEDBACK_DURATION_MS = 1000;
+        const COLORS = {
+            red:    { text: '红', value: '#e54d42' },
+            yellow: { text: '黄', value: '#fbbd08' },
+            green:  { text: '绿', value: '#39b54a' },
+            blue:   { text: '蓝', value: '#0081ff' },
+            white:  { text: '白', value: '#ffffff' }
+        };
+        const COLOR_KEYS = Object.keys(COLORS);
+
+        // --- DOM Elements ---
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const startGameBtn = document.getElementById('start-game-btn');
+        const endGameBtn = document.getElementById('end-game-btn');
+        const stimulusBox = document.getElementById('stimulus-box'); // This is now for feedback
+        const stimulusWordContainer = document.getElementById('stimulus-word');
+        const answerButtonsContainer = document.getElementById('answer-buttons');
+        const timerDisplay = document.getElementById('timer-display');
+        const progressBar = document.getElementById('progress-bar');
+        const trialCountDisplay = document.getElementById('trial-count');
+        const accuracyDisplay = document.getElementById('accuracy');
+        const avgRtDisplay = document.getElementById('avg-rt');
+
+        // --- Game State ---
+        let gameActive = false;
+        let timerIntervalId = null;
+        let timeLeft = GAME_DURATION_SECONDS;
+        let stimulusStartTime = 0;
+        let trialCount = 0;
+        let correctCount = 0;
+        let totalCorrectRT = 0;
+        let currentStimulus = { textKey: '', colorKey: '' };
+
+        // --- Main Logic ---
+        function init() {
+            createAnswerButtons();
+            showWelcomeScreen();
+            startGameBtn.addEventListener('click', startGame);
+            endGameBtn.addEventListener('click', endGame);
+        }
+
+        function createAnswerButtons() {
+            answerButtonsContainer.innerHTML = '';
+            COLOR_KEYS.forEach(key => {
+                const button = document.createElement('button');
+                button.className = 'answer-btn';
+                button.textContent = COLORS[key].text;
+                button.dataset.colorKey = key;
+                button.addEventListener('click', () => handleAnswer(key));
+                answerButtonsContainer.appendChild(button);
+            });
+        }
+
+        function showWelcomeScreen() {
+            gameScreen.classList.add('hidden');
+            welcomeScreen.classList.remove('hidden');
+        }
+
+        function startGame() {
+            welcomeScreen.classList.add('hidden');
+            gameScreen.classList.remove('hidden');
+            gameActive = true;
+            timeLeft = GAME_DURATION_SECONDS;
+            trialCount = 0;
+            correctCount = 0;
+            totalCorrectRT = 0;
+            updateStatsDisplay();
+            updateTimerDisplay();
+            startTimer();
+            nextTrial();
+        }
+
+        function endGame() {
+            gameActive = false;
+            clearInterval(timerIntervalId);
+            stimulusWordContainer.innerHTML = ''; // 清空内容
+            stimulusBox.innerHTML = '';
+            showWelcomeScreen();
+        }
+
+        function startTimer() {
+            timerIntervalId = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                if (timeLeft <= 0) {
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+            const seconds = (timeLeft % 60).toString().padStart(2, '0');
+            timerDisplay.textContent = `${minutes}:${seconds}`;
+            // 倒计时条，越来越少
+            const progressPercentage = (timeLeft / GAME_DURATION_SECONDS) * 100;
+            progressBar.style.width = `${progressPercentage}%`;
+        }
+
+        function updateStatsDisplay() {
+            trialCountDisplay.textContent = trialCount;
+            accuracyDisplay.textContent = trialCount > 0 ? `${((correctCount / trialCount) * 100).toFixed(0)}%` : 'N/A';
+            avgRtDisplay.textContent = correctCount > 0 ? `${(totalCorrectRT / correctCount).toFixed(0)}ms` : 'N/A';
+        }
+
+        function nextTrial() {
+            if (!gameActive) return;
+
+            stimulusBox.innerHTML = ''; // 清空上一轮的反馈
+            stimulusWordContainer.style.visibility = 'visible'; // 确保刺激可见
+            answerButtonsContainer.style.visibility = 'visible';
+            document.querySelector('.stimulus-text-container').style.visibility = 'visible';
+            
+            currentStimulus.textKey = COLOR_KEYS[Math.floor(Math.random() * COLOR_KEYS.length)];
+            currentStimulus.colorKey = COLOR_KEYS[Math.floor(Math.random() * COLOR_KEYS.length)];
+
+            stimulusWordContainer.textContent = COLORS[currentStimulus.textKey].text;
+            stimulusWordContainer.style.color = COLORS[currentStimulus.colorKey].value;
+
+            stimulusStartTime = performance.now();
+        }
+
+        function handleAnswer(selectedColorKey) {
+            if (!gameActive || stimulusStartTime === 0) return;
+            const reactionTime = performance.now() - stimulusStartTime;
+            stimulusStartTime = 0;
+
+            trialCount++;
+            const isCorrect = selectedColorKey === currentStimulus.colorKey;
+            
+            if (isCorrect) {
+                correctCount++;
+                totalCorrectRT += reactionTime;
+            }
+
+            updateStatsDisplay();
+            showFeedback(isCorrect);
+        }
+
+        function showFeedback(isCorrect) {
+            // 隐藏游戏内容，显示反馈
+            stimulusWordContainer.style.visibility = 'hidden';
+            answerButtonsContainer.style.visibility = 'hidden';
+            document.querySelector('.stimulus-text-container').style.visibility = 'hidden';
+
+            stimulusBox.innerHTML = `
+                <img src="assets/${isCorrect ? 'feedback-correct.png' : 'feedback-incorrect.png'}" alt="Feedback" class="feedback-image">
+            `;
+            setTimeout(nextTrial, FEEDBACK_DURATION_MS);
+        }
+
+        init();
+    </script>
+</body>
+</html>
