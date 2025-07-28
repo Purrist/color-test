@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>颜色Stroop压力诱发任务</title>
+    <style>
+        body { font-family: "Microsoft Yahei", sans-serif; display: flex; margin: 20px; gap: 20px; }
+        #task-area { flex: 3; text-align: center; font-size: 96px; margin-right: 40px; user-select: none; display: flex; flex-direction: column; justify-content: center; }
+        #controls { margin-top: 30px; }
+        button { font-size: 20px; padding: 10px 20px; margin: 5px; cursor: pointer; border-radius: 8px; border: 1px solid #ccc; }
+        #stats { flex: 1; border: 1px solid #ccc; padding: 20px; font-size: 18px; line-height: 1.6; border-radius: 8px; }
+        .time-settings { margin-bottom: 15px; display: flex; align-items: center; justify-content: center; }
+        .time-settings label { font-size: 16px; margin: 0 10px; }
+        .time-settings input[type=number] { font-size: 16px; width: 80px; padding: 4px; }
+
+        /* 新增：为反馈信息设置独立的样式 */
+        .feedback {
+            font-size: 32px;
+            color: #333;
+        }
+
+        @media (max-width: 768px) {
+            body { flex-direction: column; margin: 10px; }
+            #task-area { font-size: 64px; margin-right: 0; min-height: 150px; }
+            #stats { width: 100%; box-sizing: border-box; font-size: 16px; }
+            button { width: 80%; padding: 15px; margin: 8px auto; display: block; }
+            .time-settings { flex-direction: column; gap: 10px; }
+            /* 适配手机端的反馈信息字体 */
+            .feedback { font-size: 24px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="task-area">
+        <div class="time-settings">
+            <label>练习阶段时间(秒): <input type="number" id="practiceTimeInput" min="10" max="300" value="60" /></label>
+            <label>正式阶段时间(秒): <input type="number" id="testTimeInput" min="10" max="600" value="120" /></label>
+        </div>
+        <div id="stimulus">按“开始练习”开始</div>
+        <div id="controls">
+            <button id="startPractice">开始练习</button>
+            <button id="startTest" disabled>开始正式</button>
+            <button id="newTest">新建测试</button>
+        </div>
+    </div>
+    <div id="stats">
+        <div><b>当前反应时间:</b> <span id="currentRT">-</span> ms</div>
+        <div><b>平均反应时间:</b> <span id="avgRT">-</span> ms</div>
+        <div><b>错误率:</b> <span id="errorRate">-</span> %</div>
+        <div id="message" style="margin-top: 20px; color: green; font-weight: bold;"></div>
+        <div style="margin-top: 40px; font-size: 14px; color: #666;">
+            <p><strong>新流程说明:</strong><br>每个颜色词出现前会有"+"号提示, 请在看到颜色词后尽快按键响应。</p>
+            <p>按键对应颜色:<br>r = 红, b = 蓝, g = 绿, y = 黄</p>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='js/stroop.js') }}"></script>
+</body>
+</html>
