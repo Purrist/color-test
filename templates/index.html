@@ -7,7 +7,7 @@
     <style>
         :root {
             --primary-bg: #1e1e24;
-            --panel-bg: rgba(22, 22, 26, 0.7);
+            --panel-bg: rgba(22, 22, 26, 0); /* Make main panel transparent */
             --inner-panel-bg: #2d2d34;
             --glow-color: #00aaff;
             --primary-text: #e0e0e0;
@@ -70,38 +70,21 @@
         #start-button:hover { transform: translateY(-4px) scale(1.03); box-shadow: 0 8px 25px rgba(0, 170, 255, 0.7); }
 
         /* --- 游戏界面布局 --- */
-        #game-screen { flex-direction: column; gap: 1rem; }
+        #game-screen { flex-direction: row; align-items: stretch; gap: 2rem; }
+        
+        .left-column {
+            flex: 3; display: flex; flex-direction: column; justify-content: space-between;
+        }
         
         .round-timer-bar-container {
             width: 100%; height: 6px; background-color: rgba(255,255,255,0.1); border-radius: 3px;
-            opacity: 0; transition: opacity 0.3s ease;
+            opacity: 0; transition: opacity 0.3s ease; margin-bottom: 1rem;
         }
         .round-timer-bar-container.visible { opacity: 1; }
         #round-timer-bar {
             width: 100%; height: 100%; background-color: var(--glow-color); border-radius: 3px;
-            transition: width 0.1s linear, background-color 0.3s ease;
+            transition: width 0.1s linear;
         }
-
-        .game-content-area {
-            display: flex;
-            flex-grow: 1;
-            width: 100%;
-            gap: 2rem;
-            align-items: stretch; /* Make columns same height */
-        }
-
-        .game-separator {
-            width: 1px;
-            background-color: rgba(255, 255, 255, 0.15);
-        }
-
-        .left-column, .right-column {
-            display: flex;
-            flex-direction: column;
-            padding: 1rem 0;
-        }
-        .left-column { flex: 3; align-items: center; justify-content: space-between; }
-        .right-column { flex: 2; justify-content: space-between; align-items: center; }
 
         .word-display-area {
             flex-grow: 1; width: 100%; position: relative;
@@ -126,7 +109,7 @@
         }
         #feedback-icon { width: 5rem; height: 5rem; }
         
-        #options-container { display: flex; gap: 1rem; }
+        #options-container { display: flex; gap: 1rem; justify-content: center; }
         .option-btn {
             width: 60px; height: 60px; font-size: 1.1rem; color: var(--primary-text);
             background-color: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.2);
@@ -134,19 +117,29 @@
         }
         .option-btn:hover { transform: translateY(-4px); border-color: var(--glow-color); }
         
+        .game-separator { width: 1px; background-color: rgba(255, 255, 255, 0.15); }
+        
+        .right-column {
+            flex: 2; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 3rem;
+        }
+
         .stats-panel {
-            width: 80%;
+            width: 90%;
             background-color: var(--inner-panel-bg);
             border-radius: 15px;
             padding: 2rem;
-            display: flex; flex-direction: column; gap: 2.5rem;
+            display: flex; flex-direction: column; gap: 2rem;
         }
-        .stat-item { display: flex; justify-content: space-between; align-items: baseline; }
-        .stat-item .label { font-size: 1.1rem; color: var(--secondary-text); }
-        .stat-item .value { font-size: 2rem; font-weight: bold; color: #fff; }
-        .stat-item .unit { font-size: 1rem; color: var(--secondary-text); margin-left: 0.5rem; }
+        .stat-item {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: baseline;
+            gap: 1rem;
+        }
+        .stat-item .label { font-size: 1.1rem; color: var(--secondary-text); text-align: left; }
+        .stat-item .value { font-size: 2rem; font-weight: bold; color: #fff; text-align: center; }
+        .stat-item .unit { font-size: 1rem; color: var(--secondary-text); text-align: right; }
 
-        .right-bottom-controls { display: flex; align-items: center; justify-content: space-around; width: 100%; }
         #lives-container { display: flex; gap: 1rem; font-size: 1.8rem; }
         .heart { color: var(--heart-color); transition: color 0.5s ease, transform 0.5s ease; }
         .heart.lost { color: var(--heart-lost-color); transform: scale(0.8); }
@@ -160,19 +153,14 @@
 
         .modal {
             z-index: 10; gap: 1rem; background: rgba(0,0,0,0.6);
-            position: absolute; width: 100%; height: 100%;
-            border-radius: 20px; /* Match panel rounding */
+            position: absolute; width: 100%; height: 100%; border-radius: 20px;
         }
         .modal-content {
-            background-color: var(--primary-bg);
-            padding: 2rem 3rem; border-radius: 15px;
-            text-align: center;
+            background-color: var(--primary-bg); padding: 2rem 3rem; border-radius: 15px; text-align: center;
         }
         .modal-title { font-size: 1.5rem; font-weight: bold; color: #fff; margin-bottom: 1rem; }
         .modal-buttons { display: flex; gap: 1rem; justify-content: center; margin-top: 1.5rem;}
-        .modal-button {
-            font-size: 1rem; border: none; border-radius: 8px; padding: 0.6rem 1.5rem; cursor: pointer;
-        }
+        .modal-button { font-size: 1rem; border: none; border-radius: 8px; padding: 0.6rem 1.5rem; cursor: pointer; }
         #modal-confirm { background-color: var(--incorrect-color); color: #fff; }
         #modal-cancel { background-color: #555; color: var(--primary-text); }
     </style>
@@ -183,56 +171,49 @@
 
     <div class="panel-container">
         <div id="welcome-screen" class="screen visible">
-            <!-- ... Welcome Screen Content ... -->
-            <h1 class="main-title">色词心流挑战</h1>
+             <h1 class="main-title">色词心流挑战</h1>
             <img id="emoji" src="{{ url_for('static', filename='asset/emoji.gif') }}" alt="动态表情">
             <p class="instructions-text">你将有3次机会，挑战答对30道题。每题限时3秒，超时或答错都将消耗一次机会。保持专注，挑战开始！</p>
             <button id="start-button">开始挑战</button>
         </div>
 
         <div id="game-screen" class="screen">
-            <div class="round-timer-bar-container">
-                <div id="round-timer-bar"></div>
+            <div class="left-column">
+                <div class="round-timer-bar-container">
+                    <div id="round-timer-bar"></div>
+                </div>
+                <div class="word-display-area">
+                    <canvas id="feedback-canvas"></canvas>
+                    <div id="fixation-cross" class="centered-element">+</div>
+                    <div id="stroop-word" class="centered-element word-box"></div>
+                    <div id="feedback-container" class="centered-element">
+                         <svg id="feedback-icon" viewBox="0 0 100 100"></svg>
+                         <p id="feedback-text"></p>
+                    </div>
+                </div>
+                <div id="options-container"></div>
             </div>
-            <div class="game-content-area">
-                <div class="left-column">
-                    <div class="word-display-area">
-                        <canvas id="feedback-canvas"></canvas>
-                        <div id="fixation-cross" class="centered-element">+</div>
-                        <div id="stroop-word" class="centered-element word-box"></div>
-                        <div id="feedback-container" class="centered-element">
-                             <svg id="feedback-icon" viewBox="0 0 100 100"></svg>
-                             <p id="feedback-text"></p>
-                        </div>
+            <div class="game-separator"></div>
+            <div class="right-column">
+                <div class="stats-panel">
+                    <div class="stat-item">
+                        <span class="label">答对次数</span>
+                        <span class="value" id="correct-count-display">0 / 30</span>
+                        <span class="unit">次</span>
                     </div>
-                    <div id="options-container">
-                        <!-- Option buttons are injected by JS for consistency -->
+                    <div class="stat-item">
+                        <span class="label">已用时</span>
+                        <span class="value" id="total-time">00:00</span>
+                        <span class="unit">分钟</span>
                     </div>
-                </div>
-                <div class="game-separator"></div>
-                <div class="right-column">
-                    <div class="stats-panel">
-                        <div class="stat-item">
-                            <span class="label">答对次数</span>
-                            <span class="value" id="correct-count-display">0 / 30</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="label">已用时</span>
-                            <span class="value" id="total-time">00:00</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="label">平均反应时间</span>
-                            <div>
-                                <span class="value" id="avg-reaction-time">--</span>
-                                <span class="unit">ms</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="right-bottom-controls">
-                        <div id="lives-container"></div>
-                        <button id="restart-button">重新开始</button>
+                    <div class="stat-item">
+                        <span class="label">平均反应时间</span>
+                        <span class="value" id="avg-reaction-time">--</span>
+                        <span class="unit">ms</span>
                     </div>
                 </div>
+                <div id="lives-container"></div>
+                <button id="restart-button">重新开始</button>
             </div>
         </div>
         
@@ -249,72 +230,39 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // DOM Elements
-            const welcomeScreen = document.getElementById('welcome-screen');
-            const gameScreen = document.getElementById('game-screen');
-            const startButton = document.getElementById('start-button');
-            const restartButton = document.getElementById('restart-button');
+            const welcomeScreen = document.getElementById('welcome-screen'), gameScreen = document.getElementById('game-screen');
+            const startButton = document.getElementById('start-button'), restartButton = document.getElementById('restart-button');
+            const roundTimerContainer = document.querySelector('.round-timer-bar-container'), roundTimerBar = document.getElementById('round-timer-bar');
+            const fixationCross = document.getElementById('fixation-cross'), stroopWord = document.getElementById('stroop-word');
+            const feedbackContainer = document.getElementById('feedback-container'), feedbackIcon = document.getElementById('feedback-icon'), feedbackText = document.getElementById('feedback-text');
+            const correctCountDisplay = document.getElementById('correct-count-display'), totalTimeSpan = document.getElementById('total-time'), avgReactionTimeSpan = document.getElementById('avg-reaction-time');
+            const optionsContainer = document.getElementById('options-container'), livesContainer = document.getElementById('lives-container');
+            const confirmationModal = document.getElementById('confirmation-modal'), modalConfirmBtn = document.getElementById('modal-confirm'), modalCancelBtn = document.getElementById('modal-cancel');
             
-            const roundTimerContainer = document.querySelector('.round-timer-bar-container');
-            const roundTimerBar = document.getElementById('round-timer-bar');
-
-            const fixationCross = document.getElementById('fixation-cross');
-            const stroopWord = document.getElementById('stroop-word');
-            const feedbackContainer = document.getElementById('feedback-container');
-            const feedbackIcon = document.getElementById('feedback-icon');
-            const feedbackText = document.getElementById('feedback-text');
-            
-            const correctCountDisplay = document.getElementById('correct-count-display');
-            const totalTimeSpan = document.getElementById('total-time');
-            const avgReactionTimeSpan = document.getElementById('avg-reaction-time');
-            
-            const optionsContainer = document.getElementById('options-container');
-            const livesContainer = document.getElementById('lives-container');
-
-            const confirmationModal = document.getElementById('confirmation-modal');
-            const modalConfirmBtn = document.getElementById('modal-confirm');
-            const modalCancelBtn = document.getElementById('modal-cancel');
-
-            // SVG Icons
             const checkmarkSVG = `<path fill="none" stroke="var(--correct-color)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" d="M20,50 L40,70 L80,30" />`;
             const crossSVG = `<path fill="none" stroke="var(--incorrect-color)" stroke-width="8" stroke-linecap="round" d="M20,20 L80,80 M80,20 L20,80" />`;
-            
-            // Config
             const TARGET_CORRECT = 30, ROUND_DURATION = 3000, FEEDBACK_DURATION = 2000, FIXATION_DURATION = 500;
             const WORDS = ['红', '黄', '绿', '蓝', '白'], COLORS = { '红': 'red', '黄': 'yellow', '绿': 'green', '蓝': 'blue', '白': 'white' };
-            
-            // State
-            let lives, correctCount, totalReactionTime, totalTime, roundStartTime;
-            let gameActive = false;
-            let totalTimerInterval, roundTimer, mainTimeout;
+            let lives, correctCount, totalReactionTime, totalTime, roundStartTime, gameActive = false, totalTimerInterval, roundTimer, mainTimeout;
 
             function init() {
-                // Pre-populate buttons and hearts
                 WORDS.forEach(word => {
                     const btn = document.createElement('button');
-                    btn.className = 'option-btn';
-                    btn.dataset.color = COLORS[word];
-                    btn.textContent = word;
+                    btn.className = 'option-btn'; btn.dataset.color = COLORS[word]; btn.textContent = word;
                     optionsContainer.appendChild(btn);
                 });
                 for (let i = 0; i < 3; i++) {
                     const heart = document.createElement('span');
-                    heart.className = 'heart';
-                    heart.innerHTML = '♥';
+                    heart.className = 'heart'; heart.innerHTML = '♥';
                     livesContainer.appendChild(heart);
                 }
-
-                // Event Listeners
                 startButton.addEventListener('click', startGame);
                 restartButton.addEventListener('click', () => confirmationModal.classList.add('visible'));
                 modalConfirmBtn.addEventListener('click', () => {
-                    confirmationModal.classList.remove('visible');
-                    returnToWelcome();
+                    confirmationModal.classList.remove('visible'); returnToWelcome();
                 });
                 modalCancelBtn.addEventListener('click', () => confirmationModal.classList.remove('visible'));
-                optionsContainer.querySelectorAll('.option-btn').forEach(button => {
-                    button.addEventListener('click', e => handleResponse(e, false));
-                });
+                optionsContainer.querySelectorAll('.option-btn').forEach(button => button.addEventListener('click', e => handleResponse(e, false)));
             }
 
             function switchScreen(hideScreen, showScreen) {
@@ -323,57 +271,41 @@
             }
             
             function returnToWelcome() {
-                gameActive = false;
-                clearAllTimers();
+                gameActive = false; clearAllTimers();
                 const currentVisible = document.querySelector('.screen.visible');
                 if (currentVisible) currentVisible.classList.remove('visible');
                 setTimeout(() => welcomeScreen.classList.add('visible'), 500);
             }
 
-            function clearAllTimers() {
-                clearInterval(totalTimerInterval);
-                clearTimeout(roundTimer);
-                clearTimeout(mainTimeout);
-            }
+            function clearAllTimers() { clearInterval(totalTimerInterval); clearTimeout(roundTimer); clearTimeout(mainTimeout); }
 
             function startGame() {
                 if (gameActive) clearAllTimers();
                 const currentScreen = document.querySelector('.screen.visible') || welcomeScreen;
                 switchScreen(currentScreen, gameScreen);
-                
                 gameActive = true;
                 lives = 3; correctCount = 0; totalReactionTime = 0; totalTime = 0;
-                
-                // Reset UI
                 livesContainer.querySelectorAll('.heart').forEach(h => h.classList.remove('lost'));
-                avgReactionTimeSpan.textContent = '--';
-                totalTimeSpan.textContent = '00:00';
-                correctCountDisplay.textContent = `0 / ${TARGET_CORRECT}`;
-
+                avgReactionTimeSpan.textContent = '--'; totalTimeSpan.textContent = '00:00'; correctCountDisplay.textContent = `0 / ${TARGET_CORRECT}`;
                 totalTimerInterval = setInterval(() => {
                     totalTime++;
                     totalTimeSpan.textContent = `${String(Math.floor(totalTime/60)).padStart(2, '0')}:${String(totalTime%60).padStart(2, '0')}`;
                 }, 1000);
-                
                 prepareNextRound();
             }
             
             function endGame(isSuccess) {
-                gameActive = false;
-                clearAllTimers();
-                
+                gameActive = false; clearAllTimers();
                 const title = isSuccess ? '挑战成功!' : '挑战失败!';
-                // Re-use confirmation modal as end-game display
-                confirmationModal.querySelector('.modal-title').textContent = title;
-                confirmationModal.querySelector('#modal-cancel').style.display = 'none';
-                confirmationModal.querySelector('#modal-confirm').textContent = '返回首页';
-                confirmationModal.classList.add('visible');
+                const endModal = document.getElementById('confirmation-modal');
+                endModal.querySelector('.modal-title').textContent = title;
+                endModal.querySelector('#modal-cancel').style.display = 'none';
+                endModal.querySelector('#modal-confirm').textContent = '返回首页';
+                endModal.classList.add('visible');
             }
 
             function setElementVisibility(visibleElement) {
-                [fixationCross, stroopWord, feedbackContainer].forEach(el => {
-                    el.classList.toggle('visible', el === visibleElement);
-                });
+                [fixationCross, stroopWord, feedbackContainer].forEach(el => el.classList.toggle('visible', el === visibleElement));
             }
 
             function prepareNextRound() {
@@ -389,10 +321,8 @@
                     randomWordText = WORDS[Math.floor(Math.random() * WORDS.length)];
                     randomColorName = Object.keys(COLORS)[Math.floor(Math.random() * WORDS.length)];
                 } while (randomWordText === randomColorName);
-                
-                stroopWord.textContent = randomWordText;
-                stroopWord.style.color = COLORS[randomColorName];
-                
+                stroopWord.innerHTML = `<span>${randomWordText}</span>`;
+                stroopWord.querySelector('span').style.color = COLORS[randomColorName];
                 setElementVisibility(stroopWord);
                 startRoundTimer();
                 roundStartTime = performance.now();
@@ -403,38 +333,29 @@
                 roundTimerContainer.classList.add('visible');
                 roundTimerBar.style.transition = 'none';
                 roundTimerBar.style.width = '100%';
-                
-                setTimeout(() => { // Use timeout to prevent layout thrashing
+                setTimeout(() => {
                     roundTimerBar.style.transition = `width ${ROUND_DURATION}ms linear`;
                     roundTimerBar.style.width = '0%';
                 }, 20);
-
                 roundTimer = setTimeout(() => handleResponse(null, true), ROUND_DURATION);
             }
 
             function handleResponse(event, isTimeout = false) {
                 if (!roundStartTime) return;
                 clearTimeout(roundTimer);
-                
                 const reactionTime = Math.round(performance.now() - roundStartTime);
                 roundStartTime = 0;
-                
-                let isCorrect = !isTimeout && (event.target.dataset.color === stroopWord.style.color);
-                
+                let isCorrect = !isTimeout && (event.target.dataset.color === stroopWord.querySelector('span').style.color);
                 roundTimerContainer.classList.remove('visible');
-                setElementVisibility(null); // Hide all center elements
-                
+                setElementVisibility(null);
                 showFeedback(isCorrect, reactionTime);
                 updateStats(isCorrect, reactionTime);
-
                 if (gameActive) mainTimeout = setTimeout(prepareNextRound, FEEDBACK_DURATION);
             }
             
             function showFeedback(isCorrect, reactionTime) {
-                const color = isCorrect ? 'var(--correct-color)' : 'var(--incorrect-color)';
                 feedbackIcon.innerHTML = isCorrect ? checkmarkSVG : crossSVG;
-                createFireworks(getComputedStyle(document.documentElement).getPropertyValue(color).trim());
-                
+                isCorrect ? createFireworks() : createFailureSparks();
                 feedbackText.innerHTML = `${isCorrect ? '真棒，答对啦！' : '哎呀，答错啦！'}<br>你的反应时间为${reactionTime}毫秒`;
                 setElementVisibility(feedbackContainer);
             }
@@ -448,13 +369,11 @@
                     if (heart) {
                         heart.classList.add('lost');
                         const rect = heart.getBoundingClientRect(), panelRect = heart.closest('.panel-container').getBoundingClientRect();
-                        createHeartbreak(rect.left - panelRect.left + rect.width / 2, rect.top - panelRect.top + rect.height / 2);
+                        createHeartbreak(rect.left-panelRect.left+rect.width/2, rect.top-panelRect.top+rect.height/2);
                     }
                 }
-                
                 correctCountDisplay.textContent = `${correctCount} / ${TARGET_CORRECT}`;
                 avgReactionTimeSpan.textContent = correctCount > 0 ? Math.round(totalReactionTime / correctCount) : '--';
-
                 if (lives <= 0) endGame(false);
                 else if (correctCount >= TARGET_CORRECT) endGame(true);
             }
@@ -462,41 +381,23 @@
             init();
         });
 
-        // --- Particle Effects (largely unchanged, coordinates adjusted) ---
         (function() {
-             const bgCanvas = document.getElementById('particle-canvas'), bgCtx = bgCanvas.getContext('2d');
-            bgCanvas.width = window.innerWidth; bgCanvas.height = window.innerHeight;
-            let bgParticles;
-            class BgParticle {
-                constructor(x, y, dX, dY, s, c) {this.x=x;this.y=y;this.dirX=dX;this.dirY=dY;this.size=s;this.color=c;}
-                draw(){bgCtx.beginPath();bgCtx.arc(this.x,this.y,this.size,0,Math.PI*2,false);bgCtx.fillStyle=this.color;bgCtx.fill();}
-                update(){if(this.x>bgCanvas.width||this.x<0)this.dirX=-this.dirX;if(this.y>bgCanvas.height||this.y<0)this.dirY=-this.dirY;this.x+=this.dirX;this.y+=this.dirY;this.draw();}
-            }
+            const bgCanvas=document.getElementById('particle-canvas'),bgCtx=bgCanvas.getContext('2d');bgCanvas.width=window.innerWidth;bgCanvas.height=window.innerHeight;let bgParticles;class BgParticle{constructor(x,y,dX,dY,s,c){this.x=x;this.y=y;this.dirX=dX;this.dirY=dY;this.size=s;this.color=c;}draw(){bgCtx.beginPath();bgCtx.arc(this.x,this.y,this.size,0,Math.PI*2,false);bgCtx.fillStyle=this.color;bgCtx.fill();}update(){if(this.x>bgCanvas.width||this.x<0)this.dirX=-this.dirX;if(this.y>bgCanvas.height||this.y<0)this.dirY=-this.dirY;this.x+=this.dirX;this.y+=this.dirY;this.draw();}}
             function initBg(){bgParticles=[];let n=(bgCanvas.height*bgCanvas.width)/9e3;for(let i=0;i<n;i++){let s=Math.random()*2+1,x=Math.random()*(innerWidth-s*2)+s*2,y=Math.random()*(innerHeight-s*2)+s*2,dX=(Math.random()*.4)-.2,dY=(Math.random()*.4)-.2,c='rgba(0,170,255,0.2)';bgParticles.push(new BgParticle(x,y,dX,dY,s,c));}}
             function connectBg(){for(let a=0;a<bgParticles.length;a++){for(let b=a;b<bgParticles.length;b++){let d=(bgParticles[a].x-bgParticles[b].x)**2+(bgParticles[a].y-bgParticles[b].y)**2;if(d<(bgCanvas.width/7)*(bgCanvas.height/7)){let o=1-(d/2e4);bgCtx.strokeStyle=`rgba(0,170,255,${o*0.3})`;bgCtx.lineWidth=1;bgCtx.beginPath();bgCtx.moveTo(bgParticles[a].x,bgParticles[a].y);bgCtx.lineTo(bgParticles[b].x,bgParticles[b].y);bgCtx.stroke();}}}}
             function animateBg(){requestAnimationFrame(animateBg);bgCtx.clearRect(0,0,innerWidth,innerHeight);bgParticles.forEach(p=>p.update());connectBg();}
-            window.addEventListener('resize',()=>{bgCanvas.width=innerWidth;bgCanvas.height=innerHeight;initBg();});
-            initBg();animateBg();
-
-            const fbCanvas = document.getElementById('feedback-canvas'), fbCtx = fbCanvas.getContext('2d'), panel = document.querySelector('.panel-container');
-            let effectParticles=[];
-            class EffectParticle {
-                constructor(x,y,c,v,isFw){this.x=x;this.y=y;this.color=c;this.velocity=v;this.alpha=1;this.friction=.98;this.gravity=isFw?.05:0;this.size=Math.random()*2+1;}
-                draw(){fbCtx.save();fbCtx.globalAlpha=this.alpha;fbCtx.beginPath();fbCtx.arc(this.x,this.y,this.size,0,Math.PI*2);fbCtx.fillStyle=this.color;fbCtx.fill();fbCtx.restore();}
-                update(){this.draw();this.velocity.x*=this.friction;this.velocity.y*=this.friction;this.velocity.y+=this.gravity;this.x+=this.velocity.x;this.y+=this.velocity.y;this.alpha-=.02;}
-            }
-            const resizeFbCanvas = () => { 
-                const area = document.querySelector('.word-display-area');
-                if (area && area.clientWidth > 0) {
-                    fbCanvas.width = area.clientWidth; fbCanvas.height = area.clientHeight; 
-                }
-            };
-            window.createFireworks=(c)=>{const x = fbCanvas.width/2, y = fbCanvas.height/2; for(let i=0;i<100;i++){const a=Math.random()*Math.PI*2,p=Math.random()*5+2;effectParticles.push(new EffectParticle(x,y,c,{x:Math.cos(a)*p,y:Math.sin(a)*p},!0));}}
-            window.createHeartbreak=(x,y)=>{const c=getComputedStyle(document.documentElement).getPropertyValue('--heart-lost-color');for(let i=0;i<30;i++){const a=Math.random()*Math.PI*2,p=Math.random()*2+1;effectParticles.push(new EffectParticle(x,y,c,{x:Math.cos(a)*p,y:Math.sin(a)*p},!1));}}
+            window.addEventListener('resize',()=>{bgCanvas.width=innerWidth;bgCanvas.height=innerHeight;initBg();});initBg();animateBg();
+            const fbCanvas=document.getElementById('feedback-canvas'),fbCtx=fbCanvas.getContext('2d'),panel=document.querySelector('.panel-container');let effectParticles=[];
+            class EffectParticle{constructor(x,y,c,v,p){this.x=x;this.y=y;this.color=c;this.velocity=v;this.alpha=1;this.friction=p.friction;this.gravity=p.gravity;this.size=Math.random()*2+1;}}
+            EffectParticle.prototype.draw=function(){fbCtx.save();fbCtx.globalAlpha=this.alpha;fbCtx.beginPath();fbCtx.arc(this.x,this.y,this.size,0,Math.PI*2);fbCtx.fillStyle=this.color;fbCtx.fill();fbCtx.restore();}
+            EffectParticle.prototype.update=function(){this.draw();this.velocity.x*=this.friction;this.velocity.y*=this.friction;this.velocity.y+=this.gravity;this.x+=this.velocity.x;this.y+=this.velocity.y;this.alpha-=.02;}
+            const resizeFbCanvas=()=>{const a=document.querySelector('.word-display-area');if(a&&a.clientWidth>0){fbCanvas.width=a.clientWidth;fbCanvas.height=a.clientHeight;}};
+            function createEffect(x, y, colors, physics) { for(let i=0;i<100;i++){const c=colors[Math.floor(Math.random()*colors.length)],a=Math.random()*Math.PI*2,p=Math.random()*5+2;effectParticles.push(new EffectParticle(x,y,c,{x:Math.cos(a)*p,y:Math.sin(a)*p},physics));} }
+            window.createFireworks=()=>{const x=fbCanvas.width/2,y=fbCanvas.height/2,c=['#ffdd00','#ff4757','#39ff84','#00aaff','#a259ff'];createEffect(x,y,c,{friction:.98,gravity:.05});}
+            window.createFailureSparks=()=>{const x=fbCanvas.width/2,y=fbCanvas.height/2,c=['#555','#444','#333'];createEffect(x,y,c,{friction:.97,gravity:.02});}
+            window.createHeartbreak=(x,y)=>{const c=['#444'];createEffect(x,y,c,{friction:.95,gravity:0});}
             function animateFb(){requestAnimationFrame(animateFb);fbCtx.clearRect(0,0,fbCanvas.width,fbCanvas.height);effectParticles.forEach((p,i)=>{p.alpha<=0?effectParticles.splice(i,1):p.update();});}
-            window.addEventListener('resize', resizeFbCanvas);
-            setTimeout(resizeFbCanvas, 100); // Initial resize
-            animateFb();
+            window.addEventListener('resize',resizeFbCanvas);setTimeout(resizeFbCanvas,100);animateFb();
         })();
     </script>
 </body>
