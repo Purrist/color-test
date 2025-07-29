@@ -1,37 +1,19 @@
-from flask import Flask, render_template_string, send_from_directory, jsonify, request
-import json
-import os
-from datetime import datetime
+# app.py
+from flask import Flask, render_template
 
-app = Flask(__name__, static_folder='assets')
+# 初始化Flask应用
+app = Flask(__name__)
 
-DATA_FILE = 'data.json'
-
-# 初始化数据文件
-if not os.path.exists(DATA_FILE):
-    with open(DATA_FILE, 'w', encoding='utf-8') as f:
-        json.dump([], f, ensure_ascii=False, indent=2)
-
+# 创建一个路由，当用户访问根目录 ("/") 时，
+# 渲染并返回 templates 文件夹中的 index.html 文件
 @app.route('/')
-def index():
-    with open('index.html', 'r', encoding='utf-8') as f:
-        html_content = f.read()
-    return render_template_string(html_content)
+def stroop_test():
+    return render_template('index.html')
 
-@app.route('/assets/<path:filename>')
-def serve_assets(filename):
-    return send_from_directory('assets', filename)
-
-@app.route('/save', methods=['POST'])
-def save_result():
-    data = request.get_json()
-    data['timestamp'] = datetime.now().isoformat()
-    with open(DATA_FILE, 'r+', encoding='utf-8') as f:
-        history = json.load(f)
-        history.append(data)
-        f.seek(0)
-        json.dump(history, f, ensure_ascii=False, indent=2)
-    return jsonify({'status': 'saved'})
-
+# 主程序入口
 if __name__ == '__main__':
-    app.run(debug=True)
+    # 启动服务器
+    # host='0.0.0.0' 让服务器在局域网内可见
+    # port=5500 指定端口号
+    # debug=True 让我们修改代码后服务器能自动重启，方便调试
+    app.run(host='0.0.0.0', port=5500, debug=True)

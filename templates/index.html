@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>色词匹配小游戏</title>
+    <style>
+        :root {
+            --primary-bg: #111111;
+            --secondary-bg: #000000;
+            --container-border-color: #3f89f3;
+            --primary-text: #ffffff;
+            --secondary-text: #b7b7b7;
+            --tertiary-text: #808080;
+            --button-bg: #595959;
+            --start-button-bg: #3f89f3;
+            --correct-color: #2bbc21;
+            --incorrect-color: #dc3545;
+            --font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+            font-size: calc(10px + 0.5vw);
+        }
+        body {
+            background-color: var(--primary-bg);
+            color: var(--primary-text);
+            font-family: var(--font-family);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .screen {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease-in-out;
+        }
+        .screen.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        #welcome-screen { gap: 5vh; }
+        #welcome-screen .main-title {
+            font-size: 3vw;
+            font-weight: bold;
+            letter-spacing: 0.06em;
+            position: absolute;
+            top: 12vh;
+        }
+        .welcome-content-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 2vw;
+            width: 90vw;
+            max-width: 1700px;
+            justify-content: center;
+        }
+        .instructions-box {
+            border: 0.4vw solid var(--container-border-color);
+            background-color: var(--secondary-bg);
+            border-radius: 1vw;
+            padding: 3vh 3vw;
+            width: 58vw;
+            height: 50vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+        }
+        .instructions-box .instructions-text {
+            font-size: 1.8vw;
+            letter-spacing: 0.06em;
+            width: 95%;
+        }
+        .example-container {
+            display: flex;
+            align-items: center;
+            gap: 2.5vw;
+        }
+        .example-word-box {
+            border: 0.2vw solid var(--secondary-text);
+            padding: 2.5vh 3vw;
+            border-radius: 1.2vw;
+        }
+        .example-word {
+            font-size: 6.5vw;
+            font-weight: 900;
+            color: var(--correct-color);
+        }
+        .example-rhs {
+            display: flex;
+            flex-direction: column;
+            gap: 3vh;
+            font-size: 2vw;
+        }
+        .example-options { display: flex; gap: 1vw; }
+        .example-options .option-item {
+            border: 0.15vw solid var(--secondary-text);
+            border-radius: 1vw;
+            padding: 1.5vh 1.5vw;
+            position: relative;
+            font-size: 1.8vw;
+        }
+        .example-options .option-item::after {
+            position: absolute;
+            font-size: 1.8vw;
+            bottom: -4vh;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .example-options .correct::after { content: '✔'; color: var(--correct-color); }
+        .example-options .incorrect::after { content: '✖'; color: var(--incorrect-color); }
+        .start-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12vh;
+            width: 18vw;
+            align-self: center;
+        }
+        #emoji { width: 15vw; height: 15vw; }
+        #start-button {
+            background-color: var(--start-button-bg);
+            color: var(--primary-text);
+            font-size: 2.2vw;
+            font-weight: bold;
+            padding: 1.8vh 2.5vw;
+            border-radius: 1.5vw;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        #start-button:hover { transform: scale(1.05); }
+        #game-screen {
+            width: 90vw;
+            max-width: 1700px;
+            height: 90vh;
+            justify-content: flex-start;
+        }
+        .top-bar {
+            display: flex;
+            align-items: center;
+            gap: 1.5vw;
+            width: 100%;
+            padding: 3vh 0;
+        }
+        .top-bar .timer-icon { width: 6.5vw; max-width: 110px; }
+        .progress-bar-container {
+            flex-grow: 1;
+            height: 2vh;
+            background-color: #3d3d3d;
+            border-radius: 1vh;
+        }
+        #progress-bar {
+            width: 100%;
+            height: 100%;
+            background-color: var(--container-border-color);
+            border-radius: 1vh;
+            transition: width 1s linear;
+        }
+        #timer-display { font-size: 2.8vw; font-weight: bold; width: 10vw; text-align: right; }
+        .game-body { display: flex; flex-grow: 1; gap: 2vw; width: 100%; }
+        .main-content {
+            flex-grow: 1;
+            border: 0.5vw solid var(--container-border-color);
+            border-radius: 1.2vw;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--secondary-bg);
+            position: relative;
+            overflow: hidden;
+        }
+        .game-element {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease-in-out;
+        }
+        .game-element.visible { opacity: 1; pointer-events: auto; }
+        #word-presentation { gap: 8vw; }
+        #word-box-wrapper {
+            border: 0.25vw solid #404040;
+            padding: 3vh 3vw;
+            border-radius: 1.5vw;
+        }
+        #stroop-word { font-size: 6.5vw; font-weight: 900; }
+        #options-area { display: flex; flex-direction: column; gap: 3vh; align-items: center; }
+        #options-area p { font-size: 2.2vw; margin: 0; }
+        #options-container { display: flex; gap: 1vw; }
+        .option-btn {
+            background: rgba(63, 137, 243, 0.1);
+            border: 0.2vw solid rgba(48, 127, 238, 0.25);
+            color: var(--container-border-color);
+            border-radius: 1.2vw;
+            width: 4.5vw;
+            height: 4.5vw;
+            min-width: 60px; min-height: 60px;
+            font-size: 2vw;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .option-btn:hover { border-color: var(--container-border-color); transform: translateY(-0.3vw); }
+        #fixation-cross { font-size: 8vw; color: var(--secondary-text); }
+        #feedback-container { flex-direction: column; gap: 3vh; }
+        #feedback-icon { width: 6vw; height: 6vw; }
+        #feedback-text { font-size: 1.8vw; }
+        .sidebar {
+            width: 15vw;
+            display: flex;
+            flex-direction: column;
+            gap: 5vh;
+            font-size: 1.8vw;
+            color: var(--tertiary-text);
+            padding-top: 5vh;
+        }
+        .sidebar p { margin: 0; }
+        #end-button {
+            margin-top: auto;
+            background-color: var(--button-bg);
+            color: var(--primary-text);
+            font-size: 2vw;
+            font-weight: bold;
+            padding: 1.8vh 0;
+            border-radius: 1.5vw;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        #end-button:hover { background-color: var(--incorrect-color); }
+        #end-game-modal { z-index: 1000; }
+        .modal-content {
+            background-color: #1e1e1e;
+            padding: 4vh 4vw;
+            border-radius: 1.2vw;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 2vh;
+            border: 0.2vw solid var(--container-border-color);
+        }
+        .modal-content p:first-child { font-size: 1.8vw; margin: 0; font-weight: bold; }
+        #modal-countdown { font-size: 1.2vw; color: var(--secondary-text); }
+        #confirm-end-button { background-color: var(--incorrect-color); color: var(--primary-text); border:none; border-radius: 1vw; padding: 1.5vh 2.5vw; font-size: 1.5vw; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div id="welcome-screen" class="screen visible">
+        <h1 class="main-title">色词匹配小游戏</h1>
+        <div class="welcome-content-wrapper">
+            <div class="instructions-box">
+                <p class="instructions-text">在测试中，你会看到不同颜色的文字。你的目标是选出文字的颜色，而不是文字本身。</p>
+                <div class="example-container">
+                    <div class="example-word-box"><span class="example-word">红</span></div>
+                    <div class="example-rhs">
+                        <span>这个字的颜色是</span>
+                        <div class="example-options">
+                            <div class="option-item incorrect">红</div>
+                            <div class="option-item incorrect">黄</div>
+                            <div class="option-item correct">绿</div>
+                            <div class="option-item incorrect">蓝</div>
+                            <div class="option-item incorrect">白</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="start-area">
+                <img id="emoji" src="{{ url_for('static', filename='asset/emoji.gif') }}" alt="开心表情">
+                <button id="start-button">开始游戏</button>
+            </div>
+        </div>
+    </div>
+    <div id="game-screen" class="screen">
+        <div class="top-bar">
+            <img class="timer-icon" src="{{ url_for('static', filename='asset/clock.png') }}" alt="计时器图标">
+            <div class="progress-bar-container"><div id="progress-bar"></div></div>
+            <span id="timer-display">02:00</span>
+        </div>
+        <div class="game-body">
+            <div class="main-content">
+                <div id="fixation-cross" class="game-element">+</div>
+                <div id="word-presentation" class="game-element">
+                     <div id="word-box-wrapper"><span id="stroop-word"></span></div>
+                     <div id="options-area">
+                        <p>这个字的颜色是</p>
+                        <div id="options-container">
+                            <button class="option-btn" data-color="red">红</button>
+                            <button class="option-btn" data-color="yellow">黄</button>
+                            <button class="option-btn" data-color="green">绿</button>
+                            <button class="option-btn" data-color="blue">蓝</button>
+                            <button class="option-btn" data-color="white">白</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="feedback-container" class="game-element">
+                    <svg id="feedback-icon" viewBox="0 0 100 100"></svg>
+                    <p id="feedback-text"></p>
+                </div>
+            </div>
+            <div class="sidebar">
+                <p>次数: <span id="trials">0</span></p>
+                <p>准确率: <span id="accuracy">--</span></p>
+                <p>平均反应时间: <span id="avg-reaction-time">--</span></p>
+                <button id="end-button">结束游戏</button>
+            </div>
+        </div>
+    </div>
+    <div id="end-game-modal" class="game-element">
+        <div class="modal-content">
+            <p>游戏结束！</p>
+            <p id="modal-countdown"></p>
+            <button id="confirm-end-button">立即返回</button>
+        </div>
+    </div>
+
+    <script>
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const startButton = document.getElementById('start-button');
+        const endButton = document.getElementById('end-button');
+        const timerDisplay = document.getElementById('timer-display');
+        const progressBar = document.getElementById('progress-bar');
+        const fixationCross = document.getElementById('fixation-cross');
+        const wordPresentation = document.getElementById('word-presentation');
+        const stroopWord = document.getElementById('stroop-word');
+        const optionButtons = document.querySelectorAll('.option-btn');
+        const feedbackContainer = document.getElementById('feedback-container');
+        const feedbackIcon = document.getElementById('feedback-icon');
+        const feedbackText = document.getElementById('feedback-text');
+        const trialsSpan = document.getElementById('trials');
+        const accuracySpan = document.getElementById('accuracy');
+        const avgReactionTimeSpan = document.getElementById('avg-reaction-time');
+        const endGameModal = document.getElementById('end-game-modal');
+        const modalCountdownSpan = document.getElementById('modal-countdown');
+        const confirmEndButton = document.getElementById('confirm-end-button');
+        const checkmarkSVG = `<path fill="none" stroke="${getComputedStyle(document.documentElement).getPropertyValue('--correct-color')}" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" d="M20,50 L45,75 L80,25" />`;
+        const crossSVG = `<path fill="none" stroke="${getComputedStyle(document.documentElement).getPropertyValue('--incorrect-color')}" stroke-width="8" stroke-linecap="round" d="M20,20 L80,80 M80,20 L20,80" />`;
+        const GAME_DURATION = 120, FEEDBACK_DURATION = 1000, FIXATION_DURATION = 500;
+        const WORDS = ['红', '黄', '绿', '蓝', '白'];
+        const COLORS = { '红': 'red', '黄': 'yellow', '绿': 'green', '蓝': 'blue', '白': 'white' };
+        const COLOR_NAMES = Object.keys(COLORS);
+        let gameTimerInterval, roundTimeout, modalTimer;
+        let timeLeft, trialCount, correctCount, totalReactionTime, roundStartTime;
+        let gameActive = false;
+        function init() {
+            startButton.addEventListener('click', startGame);
+            endButton.addEventListener('click', () => endGame(false));
+            confirmEndButton.addEventListener('click', () => { clearTimeout(modalTimer); resetToWelcomeScreen(); });
+            optionButtons.forEach(button => button.addEventListener('click', handleResponse));
+        }
+        function switchScreen(hideScreen, showScreen) {
+            hideScreen.classList.remove('visible');
+            setTimeout(() => showScreen.classList.add('visible'), 400);
+        }
+        function startGame() {
+            switchScreen(welcomeScreen, gameScreen);
+            gameActive = true;
+            timeLeft = GAME_DURATION;
+            trialCount = 0; correctCount = 0; totalReactionTime = 0;
+            updateStatsDisplay();
+            updateTimerDisplay();
+            gameTimerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                if (timeLeft <= 0) endGame(true);
+            }, 1000);
+            prepareNextRound();
+        }
+        function endGame(isTimeUp) {
+            if (!gameActive) return;
+            gameActive = false;
+            clearInterval(gameTimerInterval);
+            clearTimeout(roundTimeout);
+            showEndGameModal(isTimeUp ? "时间到！" : "游戏已结束", "秒后将自动返回主页...");
+        }
+        function showEndGameModal(title, countdownText) {
+            endGameModal.querySelector('p:first-child').textContent = title;
+            endGameModal.classList.add('visible');
+            let countdown = 5;
+            const updateCountdown = () => modalCountdownSpan.textContent = `${countdown}${countdownText}`;
+            updateCountdown();
+            modalTimer = setInterval(() => {
+                countdown--;
+                updateCountdown();
+                if(countdown <= 0) {
+                    clearTimeout(modalTimer);
+                    resetToWelcomeScreen();
+                }
+            }, 1000);
+        }
+        function resetToWelcomeScreen() {
+            endGameModal.classList.remove('visible');
+            switchScreen(gameScreen, welcomeScreen);
+            [fixationCross, wordPresentation, feedbackContainer].forEach(el => el.classList.remove('visible'));
+        }
+        function updateTimerDisplay() {
+            timerDisplay.textContent = `${String(Math.floor(timeLeft / 60)).padStart(2, '0')}:${String(timeLeft % 60).padStart(2, '0')}`;
+            progressBar.style.width = `${(timeLeft / GAME_DURATION) * 100}%`;
+        }
+        function prepareNextRound() {
+            if (!gameActive) return;
+            wordPresentation.classList.remove('visible');
+            feedbackContainer.classList.remove('visible');
+            fixationCross.classList.add('visible');
+            roundTimeout = setTimeout(showStimulus, FIXATION_DURATION);
+        }
+        function showStimulus() {
+            if (!gameActive) return;
+            let randomWordText, randomColorName;
+            do {
+                randomWordText = WORDS[Math.floor(Math.random() * WORDS.length)];
+                randomColorName = COLOR_NAMES[Math.floor(Math.random() * COLOR_NAMES.length)];
+            } while (randomWordText === randomColorName);
+            stroopWord.textContent = randomWordText;
+            stroopWord.style.color = COLORS[randomColorName];
+            fixationCross.classList.remove('visible');
+            wordPresentation.classList.add('visible');
+            roundStartTime = performance.now();
+        }
+        function handleResponse(event) {
+            if (!roundStartTime || !gameActive) return;
+            const reactionTime = Math.round(performance.now() - roundStartTime);
+            roundStartTime = 0;
+            const isCorrect = (event.target.dataset.color === stroopWord.style.color);
+            updateStats(isCorrect, reactionTime);
+            showFeedback(isCorrect, reactionTime);
+        }
+        function updateStats(isCorrect, reactionTime) {
+            trialCount++;
+            if (isCorrect) { correctCount++; totalReactionTime += reactionTime; }
+            updateStatsDisplay();
+        }
+        function updateStatsDisplay() {
+            trialsSpan.textContent = trialCount;
+            accuracySpan.textContent = trialCount > 0 ? `${Math.round((correctCount / trialCount) * 100)}%` : '--';
+            avgReactionTimeSpan.textContent = correctCount > 0 ? `${Math.round(totalReactionTime / correctCount)}ms` : '--';
+        }
+        function showFeedback(isCorrect, reactionTime) {
+            wordPresentation.classList.remove('visible');
+            feedbackContainer.classList.add('visible');
+            feedbackIcon.innerHTML = isCorrect ? checkmarkSVG : crossSVG;
+            feedbackText.textContent = `${isCorrect ? '真棒，答对啦' : '诶呀，答错啦'}！你的反应时间为${reactionTime}毫秒`;
+            roundTimeout = setTimeout(prepareNextRound, FEEDBACK_DURATION);
+        }
+        init();
+    </script>
+</body>
+</html>
