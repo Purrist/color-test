@@ -5,403 +5,621 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>色词匹配小游戏</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap');
-
+        /* --- 全局与基础样式 --- */
         :root {
-            --bg-color: #1a1c20;
-            --text-color: #e0e0e0;
-            --primary-blue: #4a90e2;
-            --button-blue-bg: #2a3c5a;
-            --button-blue-border: #4a90e2;
-            --button-grey-bg: #4a4e58;
+            --primary-bg: #111111;
+            --secondary-bg: #000000;
+            --container-border-color: #3f89f3;
+            --primary-text: #ffffff;
+            --secondary-text: #b7b7b7;
+            --button-bg: #595959;
+            --button-hover-bg: #777777;
+            --start-button-bg: #3f89f3;
+            --start-button-hover-bg: #317fee;
+            --correct-color: #2bbc21;
+            --incorrect-color: #dc3545;
+            --font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
         }
 
         body {
-            font-family: 'Noto Sans SC', sans-serif;
-            background-color: var(--bg-color);
+            background-color: var(--primary-bg);
+            color: var(--primary-text);
+            font-family: var(--font-family);
             margin: 0;
             display: flex;
             justify-content: center;
             align-items: center;
-            width: 100vw;
             height: 100vh;
             overflow: hidden;
+            padding: 1rem;
+            box-sizing: border-box;
         }
 
-        .hidden {
-            display: none !important;
-        }
+        .hidden { display: none !important; }
 
-        /* --- 主容器：用于承载背景图并作为定位的基准 --- */
-        .screen-container {
-            position: relative; /* 关键：让所有子元素的绝对定位相对于我 */
-            width: 90vw;
-            max-width: 1200px; /* 限制最大宽度 */
-            aspect-ratio: 1200 / 750; /* 关键：保持和背景图一样的宽高比 */
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
-        }
-
+        /* --- 欢迎界面 --- */
         #welcome-screen {
-            background-image: url('assets/01.png');
-        }
-
-        #game-screen {
-            background-image: url('assets/02.png');
-        }
-        
-        /* --- 绝对定位的UI元素 --- */
-
-        /* 欢迎页元素 */
-        #emoji-gif {
-            position: absolute;
-            width: 15%; /* 相对于容器宽度 */
-            top: 40%;
-            left: 75%;
-            transform: translate(-50%, -50%); /* 精准居中 */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+            width: 100%;
+            max-width: 1800px;
+            position: relative;
         }
         
-        #start-game-btn {
-            position: absolute;
-            width: 20%;
-            height: 9%;
-            background-color: var(--primary-blue);
-            color: white;
-            border: none;
-            border-radius: 50px;
-            font-size: 2.2vw; /* 字体大小随视口变化 */
+        #welcome-screen .main-title {
+            font-size: 3.5rem;
             font-weight: bold;
-            cursor: pointer;
-            top: 60%;
-            left: 75%;
-            transform: translate(-50%, -50%);
-            transition: transform 0.2s;
+            letter-spacing: 0.06em;
         }
-        #start-game-btn:hover {
-            transform: translate(-50%, -50%) scale(1.05);
+        
+        .content-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 2rem;
+            width: 100%;
         }
 
-        /* 游戏页元素 */
-        #progress-bar-container {
+        .instructions-box {
+            border: 5px solid var(--container-border-color);
+            background-color: var(--secondary-bg);
+            border-radius: 12px;
+            padding: 2rem 3rem;
+            flex-basis: 1100px;
+            flex-grow: 1;
+        }
+
+        .instructions-box p {
+            font-size: 1.8rem;
+            letter-spacing: 0.06em;
+            margin-top: 0;
+        }
+
+        .example-container {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .example-word-box {
+            border: 2px solid var(--secondary-text);
+            padding: 1.5rem 2rem;
+            border-radius: 15px;
+        }
+
+        .example-word {
+            font-size: 6rem;
+            font-weight: 900;
+            color: var(--correct-color);
+        }
+
+        .example-rhs {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            font-size: 2rem;
+        }
+        
+        .example-options {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .example-options .option-item {
+            border: 2px solid var(--secondary-text);
+            border-radius: 14px;
+            padding: 1.5rem;
+            position: relative;
+            font-size: 1.8rem;
+        }
+        
+        .example-options .option-item::after {
             position: absolute;
-            width: 53.5%;
-            height: 3%;
-            top: 9.3%;
-            left: 11.8%;
-            background-color: #3e3e3e;
-            border-radius: 99px;
-            overflow: hidden;
+            font-size: 2rem;
+            bottom: -2.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .example-options .correct::after {
+            content: '✔';
+            color: var(--correct-color);
+        }
+        .example-options .incorrect::after {
+            content: '✖';
+            color: var(--incorrect-color);
+        }
+
+        .start-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+            flex-basis: 300px;
+        }
+
+        #emoji {
+            width: 150px;
+            height: 150px;
+        }
+
+        #start-button {
+            background-color: var(--start-button-bg);
+            color: var(--primary-text);
+            font-size: 2.5rem;
+            font-weight: bold;
+            letter-spacing: 0.05em;
+            padding: 1rem 3rem;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+        }
+        #start-button:hover { background-color: var(--start-button-hover-bg); }
+
+
+        /* --- 游戏主界面 --- */
+        #game-screen {
+            display: none;
+            width: 98%;
+            height: 98%;
+            max-width: 1800px;
+            max-height: 1000px;
+            flex-direction: column;
+        }
+        
+        .top-bar {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            padding: 1rem 0;
+        }
+
+        .top-bar .timer-icon {
+            width: 70px;
+            height: 70px;
+        }
+        
+        .progress-bar-container {
+            flex-grow: 1;
+            height: 20px;
+            background-color: #3d3d3d;
+            border-radius: 10px;
         }
 
         #progress-bar {
-            width: 100%; /* 初始为满 */
+            width: 100%;
             height: 100%;
-            background-color: var(--primary-blue);
-            border-radius: 99px;
-            transition: width 0.5s linear; /* 线性变化更平滑 */
+            background-color: var(--container-border-color);
+            border-radius: 10px;
+            transition: width 1s linear;
         }
 
         #timer-display {
-            position: absolute;
-            color: white;
-            font-size: 2.5vw;
+            font-size: 3rem;
             font-weight: bold;
-            top: 8%;
-            left: 67%;
+            width: 150px;
+            text-align: right;
         }
 
-        #stimulus-box {
+        .game-body {
+            display: flex;
+            flex-grow: 1;
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+        
+        .main-content {
+            flex-grow: 1;
+            border: 5px solid var(--container-border-color);
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: row;
+            padding: 2rem;
+            background-color: var(--secondary-bg);
+            position: relative;
+            overflow: hidden;
+            gap: 4rem;
+        }
+
+        #stimulus-container, #feedback-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 4rem;
+            width: 100%;
+            height: 100%;
             position: absolute;
-            width: 59%;
-            height: 62.5%;
-            top: 54%;
-            left: 35.5%;
-            transform: translate(-50%, -50%);
+            top: 0; left: 0;
+        }
+        
+        #stimulus-container > div {
+             flex: 1;
+             display: flex;
+             justify-content: center;
+             align-items: center;
+        }
+
+        #fixation-cross {
+            font-size: 8rem;
+            color: var(--secondary-text);
+            position: absolute;
+        }
+
+        #word-box-wrapper {
+             border: 3px solid #404040;
+             padding: 2rem 3rem;
+             border-radius: 18px;
+        }
+
+        #stroop-word {
+            font-size: 8rem;
+            font-weight: 900;
+        }
+
+        #options-area {
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            gap: 2rem;
             align-items: center;
-            color: white;
-            font-weight: bold;
-            font-size: 10vw;
+            flex: 1;
         }
 
-        .feedback-image {
-            width: 25%; /* 反馈图大小相对于stimulus-box */
-        }
-        
-        #stimulus-word {
-            position: absolute;
-            width: 20%;
-            height: 30%;
-            top: 55%;
-            left: 17%;
-            transform: translate(-50%, -50%);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .stimulus-text-container {
-             position: absolute;
-             top: 40%;
-             left: 45%;
-             color: white;
-             font-size: 1.8vw;
-        }
-        
-        #answer-buttons {
-            position: absolute;
-            display: flex;
-            justify-content: center;
-            gap: 1.5%; /* 按钮间距 */
-            width: 50%;
-            top: 55%;
-            left: 45%;
-        }
-
-        .answer-btn {
-            flex-grow: 1;
-            padding: 2% 0; /* 用百分比做padding */
-            background-color: var(--button-blue-bg);
-            border: 2px solid var(--button-blue-border);
-            color: var(--text-color);
-            font-size: 1.8vw;
-            font-weight: bold;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .answer-btn:hover {
-            background-color: #3b527c;
-        }
-        
-        #stats-panel {
-            position: absolute;
-            width: 20%;
-            top: 25%;
-            left: 81%;
-            color: white;
-            font-size: 1.8vw;
-            line-height: 2.5;
-        }
-        
-        .stats-panel p {
+        #options-area p {
+            font-size: 2.2rem;
             margin: 0;
-            display: flex;
-            justify-content: space-between;
         }
 
-        #end-game-btn {
-            position: absolute;
-            width: 18%;
-            height: 9%;
-            top: 75%;
-            left: 81%;
-            background-color: var(--button-grey-bg);
-            color: var(--text-color);
+        #options-container {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .option-btn {
+            background: rgba(63, 137, 243, 0.1);
+            border: 2px solid rgba(48, 127, 238, 0.25);
+            color: var(--container-border-color);
+            border-radius: 14px;
+            width: 90px;
+            height: 90px;
+            font-size: 2.2rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .option-btn:hover {
+            border-color: var(--container-border-color);
+            transform: translateY(-3px);
+        }
+
+        #feedback-icon { width: 120px; height: 120px; }
+        #feedback-text { font-size: 2rem; }
+
+        .sidebar {
+            width: 280px;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            font-size: 1.8rem;
+            color: #808080;
+            padding-top: 1rem;
+        }
+
+        .sidebar p { margin: 0; }
+        
+        #end-button {
+            margin-top: auto;
+            background-color: var(--button-bg);
+            color: var(--primary-text);
+            font-size: 2.2rem;
+            font-weight: bold;
+            letter-spacing: 0.05em;
+            padding: 1rem 0;
+            border-radius: 20px;
             border: none;
-            border-radius: 12px;
-            font-size: 1.8vw;
             cursor: pointer;
         }
-        
-        /* 针对特别小的屏幕做字体大小保护 */
-        @media (max-width: 600px) {
-            #start-game-btn, .answer-btn, #stats-panel, #end-game-btn, .stimulus-text-container, #timer-display {
-                font-size: 12px !important;
-            }
-            #stimulus-box {
-                font-size: 48px !important;
-            }
+        #end-button:hover { background-color: var(--incorrect-color); }
+
+        /* --- 结束游戏弹窗 --- */
+        #end-game-modal {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
         }
+        .modal-content {
+            background-color: #1e1e1e;
+            padding: 2rem 3rem;
+            border-radius: 12px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            border: 2px solid var(--container-border-color);
+        }
+        .modal-content p:first-child { font-size: 1.5rem; margin: 0; }
+        #modal-countdown { font-size: 1rem; color: var(--secondary-text); }
+        #confirm-end-button { background-color: var(--incorrect-color); color: var(--primary-text); border:none; border-radius: 8px; padding: 10px 20px; font-size: 1.2em; cursor: pointer; }
+
     </style>
 </head>
 <body>
 
-    <div id="welcome-screen" class="screen-container">
-        <img id="emoji-gif" src="assets/emoji.gif" alt="Emoji">
-        <button id="start-game-btn">开始游戏</button>
-    </div>
-
-    <div id="game-screen" class="screen-container hidden">
-        <!-- 进度条和时间显示 -->
-        <div id="progress-bar-container"><div id="progress-bar"></div></div>
-        <span id="timer-display">02:00</span>
-
-        <!-- 刺激和反馈区域 (合并)-->
-        <div id="stimulus-box"></div>
-        
-        <!-- 游戏主要内容 -->
-        <div id="stimulus-word"></div>
-        <p class="stimulus-text-container">这个字的颜色是</p>
-        <div id="answer-buttons"></div>
-
-        <!-- 侧边栏 -->
-        <div id="stats-panel">
-            <p><span>次数:</span> <span id="trial-count">0</span></p>
-            <p><span>准确率:</span> <span id="accuracy">N/A</span></p>
-            <p><span>平均反应时间:</span> <span id="avg-rt">N/A</span></p>
+    <!-- 欢迎界面 -->
+    <div id="welcome-screen">
+        <h1 class="main-title">色词匹配小游戏</h1>
+        <div class="content-wrapper">
+            <div class="instructions-box">
+                <p>在测试中，你会看到不同颜色的文字。你的目标是选出文字的颜色，而不是文字本身。</p>
+                <div class="example-container">
+                    <div class="example-word-box"><span class="example-word">红</span></div>
+                    <div class="example-rhs">
+                        <span>这个字的颜色是</span>
+                        <div class="example-options">
+                            <div class="option-item incorrect">红</div>
+                            <div class="option-item incorrect">黄</div>
+                            <div class="option-item correct">绿</div>
+                            <div class="option-item incorrect">蓝</div>
+                            <div class="option-item incorrect">白</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="start-area">
+                <img id="emoji" src="asset/emoji.gif" alt="开心表情">
+                <button id="start-button">开始游戏</button>
+            </div>
         </div>
-        <button id="end-game-btn">结束游戏</button>
     </div>
+
+    <!-- 游戏主界面 -->
+    <div id="game-screen">
+        <div class="top-bar">
+            <img class="timer-icon" src="asset/timer-icon.svg" alt="计时器图标">
+            <div class="progress-bar-container"><div id="progress-bar"></div></div>
+            <span id="timer-display">02:00</span>
+        </div>
+        <div class="game-body">
+            <div class="main-content">
+                <!-- 刺激与反馈容器 -->
+                <div id="stimulus-container" class="hidden">
+                    <div id="fixation-cross" class="hidden">+</div>
+                    <div id="word-presentation" class="hidden">
+                         <div id="word-box-wrapper"><span id="stroop-word"></span></div>
+                         <div id="options-area">
+                            <p>这个字的颜色是</p>
+                            <div id="options-container">
+                                <button class="option-btn" data-color="red">红</button>
+                                <button class="option-btn" data-color="yellow">黄</button>
+                                <button class="option-btn" data-color="green">绿</button>
+                                <button class="option-btn" data-color="blue">蓝</button>
+                                <button class="option-btn" data-color="white">白</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="feedback-container" class="hidden">
+                    <svg id="feedback-icon" viewBox="0 0 100 100"></svg>
+                    <p id="feedback-text"></p>
+                </div>
+            </div>
+            <div class="sidebar">
+                <p>次数: <span id="trials">0</span></p>
+                <p>准确率: <span id="accuracy">--</span></p>
+                <p>平均反应时间: <span id="avg-reaction-time">--</span></p>
+                <button id="end-button">结束游戏</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 结束游戏确认弹窗 -->
+    <div id="end-game-modal">
+        <div class="modal-content">
+            <p>游戏结束！</p>
+            <p id="modal-countdown">5秒后将自动返回主页...</p>
+            <button id="confirm-end-button">立即返回</button>
+        </div>
+    </div>
+
 
     <script>
-        const GAME_DURATION_SECONDS = 120;
-        const FEEDBACK_DURATION_MS = 1000;
-        const COLORS = {
-            red:    { text: '红', value: '#e54d42' },
-            yellow: { text: '黄', value: '#fbbd08' },
-            green:  { text: '绿', value: '#39b54a' },
-            blue:   { text: '蓝', value: '#0081ff' },
-            white:  { text: '白', value: '#ffffff' }
-        };
-        const COLOR_KEYS = Object.keys(COLORS);
-
-        // --- DOM Elements ---
+        // --- DOM 元素获取 ---
         const welcomeScreen = document.getElementById('welcome-screen');
         const gameScreen = document.getElementById('game-screen');
-        const startGameBtn = document.getElementById('start-game-btn');
-        const endGameBtn = document.getElementById('end-game-btn');
-        const stimulusBox = document.getElementById('stimulus-box'); // This is now for feedback
-        const stimulusWordContainer = document.getElementById('stimulus-word');
-        const answerButtonsContainer = document.getElementById('answer-buttons');
+        const startButton = document.getElementById('start-button');
+        const endButton = document.getElementById('end-button');
         const timerDisplay = document.getElementById('timer-display');
         const progressBar = document.getElementById('progress-bar');
-        const trialCountDisplay = document.getElementById('trial-count');
-        const accuracyDisplay = document.getElementById('accuracy');
-        const avgRtDisplay = document.getElementById('avg-rt');
+        const stimulusContainer = document.getElementById('stimulus-container');
+        const fixationCross = document.getElementById('fixation-cross');
+        const wordPresentation = document.getElementById('word-presentation');
+        const stroopWord = document.getElementById('stroop-word');
+        const optionButtons = document.querySelectorAll('.option-btn');
+        const feedbackContainer = document.getElementById('feedback-container');
+        const feedbackIcon = document.getElementById('feedback-icon');
+        const feedbackText = document.getElementById('feedback-text');
+        const trialsSpan = document.getElementById('trials');
+        const accuracySpan = document.getElementById('accuracy');
+        const avgReactionTimeSpan = document.getElementById('avg-reaction-time');
+        const endGameModal = document.getElementById('end-game-modal');
+        const modalCountdownSpan = document.getElementById('modal-countdown');
+        const confirmEndButton = document.getElementById('confirm-end-button');
 
-        // --- Game State ---
+        // --- SVG 图标 ---
+        const checkmarkSVG = `<path fill="none" stroke="${getComputedStyle(document.documentElement).getPropertyValue('--correct-color')}" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" d="M20,50 L45,75 L80,25" />`;
+        const crossSVG = `<path fill="none" stroke="${getComputedStyle(document.documentElement).getPropertyValue('--incorrect-color')}" stroke-width="8" stroke-linecap="round" d="M20,20 L80,80 M80,20 L20,80" />`;
+
+        // --- 游戏配置与状态变量 ---
+        const GAME_DURATION = 120; // 2分钟
+        const FEEDBACK_DURATION = 1000;
+        const FIXATION_DURATION = 500;
+        
+        const WORDS = ['红', '黄', '绿', '蓝', '白'];
+        const COLORS = {
+            '红': 'red',
+            '黄': 'yellow',
+            '绿': 'green',
+            '蓝': 'blue',
+            '白': 'white'
+        };
+        const COLOR_NAMES = Object.keys(COLORS);
+
+        let gameTimerInterval = null, roundTimeout = null, modalTimer = null;
+        let timeLeft = GAME_DURATION, trialCount = 0, correctCount = 0, totalReactionTime = 0, roundStartTime = 0;
         let gameActive = false;
-        let timerIntervalId = null;
-        let timeLeft = GAME_DURATION_SECONDS;
-        let stimulusStartTime = 0;
-        let trialCount = 0;
-        let correctCount = 0;
-        let totalCorrectRT = 0;
-        let currentStimulus = { textKey: '', colorKey: '' };
 
-        // --- Main Logic ---
+        // --- 函数定义 ---
         function init() {
-            createAnswerButtons();
-            showWelcomeScreen();
-            startGameBtn.addEventListener('click', startGame);
-            endGameBtn.addEventListener('click', endGame);
-        }
-
-        function createAnswerButtons() {
-            answerButtonsContainer.innerHTML = '';
-            COLOR_KEYS.forEach(key => {
-                const button = document.createElement('button');
-                button.className = 'answer-btn';
-                button.textContent = COLORS[key].text;
-                button.dataset.colorKey = key;
-                button.addEventListener('click', () => handleAnswer(key));
-                answerButtonsContainer.appendChild(button);
-            });
-        }
-
-        function showWelcomeScreen() {
-            gameScreen.classList.add('hidden');
-            welcomeScreen.classList.remove('hidden');
+            startButton.addEventListener('click', startGame);
+            endButton.addEventListener('click', () => showEndGameModal("确定要结束游戏吗？", "即将返回主页..."));
+            confirmEndButton.addEventListener('click', () => { clearTimeout(modalTimer); resetToWelcomeScreen(); });
+            optionButtons.forEach(button => button.addEventListener('click', handleResponse));
         }
 
         function startGame() {
             welcomeScreen.classList.add('hidden');
-            gameScreen.classList.remove('hidden');
+            gameScreen.style.display = 'flex';
+            
             gameActive = true;
-            timeLeft = GAME_DURATION_SECONDS;
+            timeLeft = GAME_DURATION;
             trialCount = 0;
             correctCount = 0;
-            totalCorrectRT = 0;
+            totalReactionTime = 0;
             updateStatsDisplay();
+            
             updateTimerDisplay();
-            startTimer();
-            nextTrial();
+            gameTimerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                if (timeLeft <= 0) endGame();
+            }, 1000);
+
+            nextRound();
         }
 
         function endGame() {
+            if (!gameActive) return;
             gameActive = false;
-            clearInterval(timerIntervalId);
-            stimulusWordContainer.innerHTML = ''; // 清空内容
-            stimulusBox.innerHTML = '';
-            showWelcomeScreen();
+            clearInterval(gameTimerInterval);
+            clearTimeout(roundTimeout);
+            showEndGameModal("时间到！", "秒后将自动返回主页...");
         }
 
-        function startTimer() {
-            timerIntervalId = setInterval(() => {
-                timeLeft--;
-                updateTimerDisplay();
-                if (timeLeft <= 0) {
-                    endGame();
+        function showEndGameModal(title, countdownText) {
+            endGameModal.querySelector('p:first-child').textContent = title;
+            endGameModal.style.display = 'flex';
+            
+            let countdown = 5;
+            const updateCountdown = () => modalCountdownSpan.textContent = `${countdown}${countdownText}`;
+            updateCountdown();
+
+            modalTimer = setInterval(() => {
+                countdown--;
+                updateCountdown();
+                if(countdown <= 0) {
+                    clearTimeout(modalTimer);
+                    resetToWelcomeScreen();
                 }
             }, 1000);
         }
 
+        function resetToWelcomeScreen() {
+            gameScreen.style.display = 'none';
+            endGameModal.style.display = 'none';
+            stimulusContainer.classList.add('hidden');
+            feedbackContainer.classList.add('hidden');
+            welcomeScreen.classList.remove('hidden');
+            
+            clearInterval(gameTimerInterval);
+            clearTimeout(roundTimeout);
+            clearTimeout(modalTimer);
+            gameActive = false;
+        }
+
         function updateTimerDisplay() {
-            const minutes = Math.floor(timeLeft / 60).toString().padStart(2, '0');
-            const seconds = (timeLeft % 60).toString().padStart(2, '0');
+            const minutes = String(Math.floor(timeLeft / 60)).padStart(2, '0');
+            const seconds = String(timeLeft % 60).padStart(2, '0');
             timerDisplay.textContent = `${minutes}:${seconds}`;
-            // 倒计时条，越来越少
-            const progressPercentage = (timeLeft / GAME_DURATION_SECONDS) * 100;
-            progressBar.style.width = `${progressPercentage}%`;
+            progressBar.style.width = `${(timeLeft / GAME_DURATION) * 100}%`;
+        }
+        
+        function nextRound() {
+            if (!gameActive) return;
+
+            feedbackContainer.classList.add('hidden');
+            stimulusContainer.classList.remove('hidden');
+            wordPresentation.classList.add('hidden');
+            fixationCross.classList.remove('hidden');
+
+            roundTimeout = setTimeout(() => {
+                if (!gameActive) return;
+
+                fixationCross.classList.add('hidden');
+                
+                const randomWordText = WORDS[Math.floor(Math.random() * WORDS.length)];
+                const randomColorName = COLOR_NAMES[Math.floor(Math.random() * COLOR_NAMES.length)];
+                
+                stroopWord.textContent = randomWordText;
+                stroopWord.style.color = COLORS[randomColorName];
+                
+                // 确保文字颜色和含义不同，增加难度
+                if (stroopWord.textContent === randomColorName) {
+                    return nextRound(); // 重新生成
+                }
+
+                // 准备好刺激后，显示并计时
+                wordPresentation.style.display = 'flex'; // 使用flex来布局
+                stimulusContainer.style.flexDirection = 'row';
+                wordPresentation.classList.remove('hidden');
+                roundStartTime = performance.now();
+            }, FIXATION_DURATION);
+        }
+
+        function handleResponse(event) {
+            if (!roundStartTime) return;
+            const reactionTime = Math.round(performance.now() - roundStartTime);
+            roundStartTime = 0;
+
+            const isCorrect = (event.target.dataset.color === stroopWord.style.color);
+            updateStats(isCorrect, reactionTime);
+            showFeedback(isCorrect, reactionTime);
+        }
+
+        function updateStats(isCorrect, reactionTime) {
+            trialCount++;
+            if (isCorrect) {
+                correctCount++;
+                totalReactionTime += reactionTime;
+            }
+            updateStatsDisplay();
         }
 
         function updateStatsDisplay() {
-            trialCountDisplay.textContent = trialCount;
-            accuracyDisplay.textContent = trialCount > 0 ? `${((correctCount / trialCount) * 100).toFixed(0)}%` : 'N/A';
-            avgRtDisplay.textContent = correctCount > 0 ? `${(totalCorrectRT / correctCount).toFixed(0)}ms` : 'N/A';
+            trialsSpan.textContent = trialCount;
+            accuracySpan.textContent = trialCount > 0 ? `${Math.round((correctCount / trialCount) * 100)}%` : '--';
+            avgReactionTimeSpan.textContent = correctCount > 0 ? `${Math.round(totalReactionTime / correctCount)}ms` : '--';
         }
+        
+        function showFeedback(isCorrect, reactionTime) {
+            wordPresentation.classList.add('hidden');
+            stimulusContainer.classList.add('hidden'); // 隐藏整个刺激区
+            feedbackContainer.classList.remove('hidden'); // 显示反馈区
 
-        function nextTrial() {
-            if (!gameActive) return;
-
-            stimulusBox.innerHTML = ''; // 清空上一轮的反馈
-            stimulusWordContainer.style.visibility = 'visible'; // 确保刺激可见
-            answerButtonsContainer.style.visibility = 'visible';
-            document.querySelector('.stimulus-text-container').style.visibility = 'visible';
+            feedbackIcon.innerHTML = isCorrect ? checkmarkSVG : crossSVG;
+            feedbackText.textContent = `${isCorrect ? '真棒，答对啦' : '诶呀，答错啦'}！你的反应时间为${reactionTime}毫秒`;
             
-            currentStimulus.textKey = COLOR_KEYS[Math.floor(Math.random() * COLOR_KEYS.length)];
-            currentStimulus.colorKey = COLOR_KEYS[Math.floor(Math.random() * COLOR_KEYS.length)];
-
-            stimulusWordContainer.textContent = COLORS[currentStimulus.textKey].text;
-            stimulusWordContainer.style.color = COLORS[currentStimulus.colorKey].value;
-
-            stimulusStartTime = performance.now();
+            roundTimeout = setTimeout(nextRound, FEEDBACK_DURATION);
         }
 
-        function handleAnswer(selectedColorKey) {
-            if (!gameActive || stimulusStartTime === 0) return;
-            const reactionTime = performance.now() - stimulusStartTime;
-            stimulusStartTime = 0;
-
-            trialCount++;
-            const isCorrect = selectedColorKey === currentStimulus.colorKey;
-            
-            if (isCorrect) {
-                correctCount++;
-                totalCorrectRT += reactionTime;
-            }
-
-            updateStatsDisplay();
-            showFeedback(isCorrect);
-        }
-
-        function showFeedback(isCorrect) {
-            // 隐藏游戏内容，显示反馈
-            stimulusWordContainer.style.visibility = 'hidden';
-            answerButtonsContainer.style.visibility = 'hidden';
-            document.querySelector('.stimulus-text-container').style.visibility = 'hidden';
-
-            stimulusBox.innerHTML = `
-                <img src="assets/${isCorrect ? 'feedback-correct.png' : 'feedback-incorrect.png'}" alt="Feedback" class="feedback-image">
-            `;
-            setTimeout(nextTrial, FEEDBACK_DURATION_MS);
-        }
-
+        // --- 启动脚本 ---
         init();
     </script>
 </body>
