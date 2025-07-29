@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>色词心流挑战</title>
     <style>
-        /* --- 全局样式变量与基础设置 --- */
         :root {
-            --primary-bg: #0f0f12;
+            --primary-bg: #1e1e24;
             --panel-bg: rgba(22, 22, 26, 0.7);
+            --inner-panel-bg: #2d2d34;
             --glow-color: #00aaff;
             --primary-text: #e0e0e0;
             --secondary-text: #888888;
@@ -17,7 +17,7 @@
             --heart-color: #ff4757;
             --heart-lost-color: #444444;
             --font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
-            font-size: calc(11px + 0.5vw);
+            font-size: calc(10px + 0.5vw);
         }
 
         body {
@@ -32,57 +32,32 @@
             align-items: center;
         }
         
-        /* --- 动态粒子背景 --- */
-        #particle-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-        }
+        #particle-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
         
-        /* --- 核心悬浮面板 --- */
         .panel-container {
-            width: 90vw;
-            height: 90vh;
-            max-width: 1200px;
-            max-height: 750px;
+            width: 90vw; height: 90vh; max-width: 1200px; max-height: 750px;
             background: var(--panel-bg);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             border-radius: 20px;
             border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 8px 40px rgba(0, 170, 255, 0.25);
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3);
             position: relative;
             overflow: hidden;
             display: flex;
         }
 
-        /* --- 界面切换通用样式 --- */
         .screen {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 2rem;
-            box-sizing: border-box;
-            opacity: 0;
-            transform: scale(0.98);
+            position: absolute; width: 100%; height: 100%;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            padding: 2rem; box-sizing: border-box;
+            opacity: 0; transform: scale(0.98);
             pointer-events: none;
             transition: opacity 0.5s ease, transform 0.5s ease;
         }
-        
-        .screen.visible {
-            opacity: 1;
-            transform: scale(1);
-            pointer-events: auto;
-        }
+        .screen.visible { opacity: 1; transform: scale(1); pointer-events: auto; }
 
-        /* --- 欢迎界面 --- */
         #welcome-screen { gap: 1.5rem; text-align: center; }
         .main-title { font-size: 2.5rem; font-weight: 700; color: #fff; text-shadow: 0 0 15px var(--glow-color); }
         .instructions-text { font-size: 1.1rem; color: var(--secondary-text); max-width: 50ch; line-height: 1.7; }
@@ -94,134 +69,112 @@
         }
         #start-button:hover { transform: translateY(-4px) scale(1.03); box-shadow: 0 8px 25px rgba(0, 170, 255, 0.7); }
 
-        /* --- 游戏界面 --- */
-        #game-screen {
-            display: flex;
-            width: 100%;
-            height: 100%;
-            gap: 2rem;
-        }
-        .left-panel {
-            flex: 3;
-            display: flex;
-            flex-direction: column;
-        }
-        .right-panel {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background: rgba(0,0,0,0.25);
-            border-radius: 15px;
-            padding: 2rem 1.5rem;
-            justify-content: space-around; /* 关键：让内容宽松分布 */
-        }
+        /* --- 游戏界面布局 --- */
+        #game-screen { flex-direction: column; gap: 1rem; }
         
-        /* 左侧面板：刺激呈现区 */
-        .stimulus-area {
-            flex-grow: 1;
-            position: relative; /* 关键：作为定位基准 */
-            display: flex;
-            justify-content: center;
-            align-items: center;
+        .round-timer-bar-container {
+            width: 100%; height: 6px; background-color: rgba(255,255,255,0.1); border-radius: 3px;
+            opacity: 0; transition: opacity 0.3s ease;
         }
-        .stimulus-centerpoint {
-            position: absolute; /* 关键：所有居中元素的容器 */
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        #feedback-canvas {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            pointer-events: none; /* 允许点击穿透 */
-        }
-        .game-text { /* +号和Stroop字的共同容器 */
-            font-weight: 900;
-            text-shadow: 0 0 8px rgba(0,0,0,0.5);
-            opacity: 0;
-            transform: scale(0.9);
-            transition: opacity 0.3s ease, transform 0.3s ease;
-            position: absolute; /* 关键：使其可以与canvas重叠 */
-        }
-        .game-text.visible { opacity: 1; transform: scale(1); }
-        #fixation-cross { font-size: 8rem; color: var(--secondary-text); }
-        #stroop-word { font-size: 9rem; }
-        
-        /* 左侧面板：回合倒计时和选项 */
-        .round-timer-container {
-            height: 6px;
-            background-color: rgba(255,255,255,0.1);
-            border-radius: 3px;
-            margin: 1rem 0;
-            overflow: hidden;
-        }
-        #round-progress-bar {
-            width: 100%;
-            height: 100%;
-            background-color: var(--glow-color);
-            border-radius: 3px;
+        .round-timer-bar-container.visible { opacity: 1; }
+        #round-timer-bar {
+            width: 100%; height: 100%; background-color: var(--glow-color); border-radius: 3px;
             transition: width 0.1s linear, background-color 0.3s ease;
         }
-        @keyframes red-flash {
-            50% { background-color: var(--incorrect-color); }
-        }
-        #round-progress-bar.urgent { animation: red-flash 0.5s infinite; }
-        
-        #options-container { display: flex; justify-content: center; gap: 1rem; padding: 1rem 0; }
-        .option-btn {
-            width: 65px; height: 65px; font-size: 1.2rem; color: var(--primary-text);
-            background-color: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 15px; cursor: pointer; transition: all 0.2s ease;
-        }
-        .option-btn:hover {
-            transform: translateY(-5px);
-            border-color: var(--glow-color);
-            box-shadow: 0 0 15px var(--glow-color);
+
+        .game-content-area {
+            display: flex;
+            flex-grow: 1;
+            width: 100%;
+            gap: 2rem;
+            align-items: stretch; /* Make columns same height */
         }
 
-        /* 右侧面板：数据统计区 */
-        #lives-container { display: flex; justify-content: center; gap: 1rem; font-size: 2rem; }
+        .game-separator {
+            width: 1px;
+            background-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .left-column, .right-column {
+            display: flex;
+            flex-direction: column;
+            padding: 1rem 0;
+        }
+        .left-column { flex: 3; align-items: center; justify-content: space-between; }
+        .right-column { flex: 2; justify-content: space-between; align-items: center; }
+
+        .word-display-area {
+            flex-grow: 1; width: 100%; position: relative;
+            display: flex; justify-content: center; align-items: center;
+        }
+        #feedback-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+        
+        .centered-element {
+            position: absolute; opacity: 0; transform: scale(0.9);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            text-align: center;
+            display: flex; justify-content: center; align-items: center;
+            width: 50%; aspect-ratio: 1 / 1;
+        }
+        .centered-element.visible { opacity: 1; transform: scale(1); }
+        .word-box { border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 20px; }
+        
+        #fixation-cross { font-size: 7rem; font-weight: 900; color: var(--secondary-text); }
+        #stroop-word { font-size: 8rem; font-weight: 900; }
+        #feedback-container {
+            flex-direction: column; font-size: 1.2rem; gap: 1rem;
+        }
+        #feedback-icon { width: 5rem; height: 5rem; }
+        
+        #options-container { display: flex; gap: 1rem; }
+        .option-btn {
+            width: 60px; height: 60px; font-size: 1.1rem; color: var(--primary-text);
+            background-color: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px; cursor: pointer; transition: all 0.2s ease;
+        }
+        .option-btn:hover { transform: translateY(-4px); border-color: var(--glow-color); }
+        
+        .stats-panel {
+            width: 80%;
+            background-color: var(--inner-panel-bg);
+            border-radius: 15px;
+            padding: 2rem;
+            display: flex; flex-direction: column; gap: 2.5rem;
+        }
+        .stat-item { display: flex; justify-content: space-between; align-items: baseline; }
+        .stat-item .label { font-size: 1.1rem; color: var(--secondary-text); }
+        .stat-item .value { font-size: 2rem; font-weight: bold; color: #fff; }
+        .stat-item .unit { font-size: 1rem; color: var(--secondary-text); margin-left: 0.5rem; }
+
+        .right-bottom-controls { display: flex; align-items: center; justify-content: space-around; width: 100%; }
+        #lives-container { display: flex; gap: 1rem; font-size: 1.8rem; }
         .heart { color: var(--heart-color); transition: color 0.5s ease, transform 0.5s ease; }
         .heart.lost { color: var(--heart-lost-color); transform: scale(0.8); }
-        .stats-item { text-align: center; }
-        .stats-item .label { font-size: 1rem; color: var(--secondary-text); margin-bottom: 0.75rem; }
-        .stats-item .value { font-size: 2rem; font-weight: bold; color: #fff; line-height: 1.2; }
-        .stats-item .unit { font-size: 1rem; color: var(--secondary-text); margin-left: 0.25rem; }
+        #restart-button {
+            font-size: 1rem; font-weight: bold; color: var(--primary-text);
+            background-color: #4a4a52;
+            padding: 0.7rem 1.5rem; border-radius: 10px; border: none; cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        #restart-button:hover { background-color: var(--glow-color); color: #fff; }
 
-        /* 反馈与结束弹窗 */
-        #feedback-text-container {
-            position: absolute;
-            bottom: 25%; /* 放在选项上方 */
-            width: 100%;
+        .modal {
+            z-index: 10; gap: 1rem; background: rgba(0,0,0,0.6);
+            position: absolute; width: 100%; height: 100%;
+            border-radius: 20px; /* Match panel rounding */
+        }
+        .modal-content {
+            background-color: var(--primary-bg);
+            padding: 2rem 3rem; border-radius: 15px;
             text-align: center;
-            opacity: 0;
-            transition: opacity 0.3s ease;
         }
-        #feedback-text-container.visible { opacity: 1; }
-        #feedback-text { font-size: 1.1rem; }
-        
-        #end-game-modal { z-index: 10; gap: 1rem; background: rgba(0,0,0,0.6); }
-        .modal-title { font-size: 2rem; font-weight: bold; color: #fff; }
-        #modal-countdown { font-size: 1rem; color: var(--secondary-text); }
-        #confirm-end-button {
-            font-size: 1.1rem; background-color: var(--glow-color); color: #fff;
-            border: none; border-radius: 8px; padding: 0.7rem 1.5rem; cursor: pointer; transition: all 0.2s ease;
+        .modal-title { font-size: 1.5rem; font-weight: bold; color: #fff; margin-bottom: 1rem; }
+        .modal-buttons { display: flex; gap: 1rem; justify-content: center; margin-top: 1.5rem;}
+        .modal-button {
+            font-size: 1rem; border: none; border-radius: 8px; padding: 0.6rem 1.5rem; cursor: pointer;
         }
-
-        /* 响应式设计 */
-        @media (max-width: 900px) {
-            .panel-container { flex-direction: column; height: 95vh; max-height: none; }
-            #game-screen { flex-direction: column; padding: 1rem; gap: 1rem; }
-            .right-panel { flex-direction: row; flex-wrap: wrap; flex: 0; padding: 1rem; justify-content: space-around; }
-            .stats-item { flex-basis: 30%; }
-            #stroop-word { font-size: 6rem; }
-            #fixation-cross { font-size: 6rem; }
-        }
+        #modal-confirm { background-color: var(--incorrect-color); color: #fff; }
+        #modal-cancel { background-color: #555; color: var(--primary-text); }
     </style>
 </head>
 <body>
@@ -229,432 +182,322 @@
     <canvas id="particle-canvas"></canvas>
 
     <div class="panel-container">
-        <!-- 欢迎界面 -->
         <div id="welcome-screen" class="screen visible">
+            <!-- ... Welcome Screen Content ... -->
             <h1 class="main-title">色词心流挑战</h1>
             <img id="emoji" src="{{ url_for('static', filename='asset/emoji.gif') }}" alt="动态表情">
             <p class="instructions-text">你将有3次机会，挑战答对30道题。每题限时3秒，超时或答错都将消耗一次机会。保持专注，挑战开始！</p>
             <button id="start-button">开始挑战</button>
         </div>
 
-        <!-- 游戏界面 -->
         <div id="game-screen" class="screen">
-            <div class="left-panel">
-                <div class="stimulus-area">
-                    <div class="stimulus-centerpoint">
-                         <div id="fixation-cross" class="game-text">+</div>
-                         <div id="stroop-word" class="game-text"></div>
-                    </div>
-                    <canvas id="feedback-canvas"></canvas>
-                </div>
-                <div id="feedback-text-container">
-                    <p id="feedback-text"></p>
-                </div>
-                <div class="round-timer-container">
-                    <div id="round-progress-bar"></div>
-                </div>
-                <div id="options-container">
-                    <button class="option-btn" data-color="red">红</button>
-                    <button class="option-btn" data-color="yellow">黄</button>
-                    <button class="option-btn" data-color="green">绿</button>
-                    <button class="option-btn" data-color="blue">蓝</button>
-                    <button class="option-btn" data-color="white">白</button>
-                </div>
+            <div class="round-timer-bar-container">
+                <div id="round-timer-bar"></div>
             </div>
-            <div class="right-panel">
-                <div id="lives-container">
-                    <span class="heart">♥</span>
-                    <span class="heart">♥</span>
-                    <span class="heart">♥</span>
+            <div class="game-content-area">
+                <div class="left-column">
+                    <div class="word-display-area">
+                        <canvas id="feedback-canvas"></canvas>
+                        <div id="fixation-cross" class="centered-element">+</div>
+                        <div id="stroop-word" class="centered-element word-box"></div>
+                        <div id="feedback-container" class="centered-element">
+                             <svg id="feedback-icon" viewBox="0 0 100 100"></svg>
+                             <p id="feedback-text"></p>
+                        </div>
+                    </div>
+                    <div id="options-container">
+                        <!-- Option buttons are injected by JS for consistency -->
+                    </div>
                 </div>
-                <div class="stats-item">
-                    <div class="label">进度</div>
-                    <div class="value"><span id="correct-count">0</span> / 30</div>
-                </div>
-                <div class="stats-item">
-                    <div class="label">已用时</div>
-                    <div class="value" id="total-time">00:00</div>
-                </div>
-                <div class="stats-item">
-                    <div class="label">平均反应</div>
-                    <div class="value"><span id="avg-reaction-time">--</span><span class="unit">ms</span></div>
+                <div class="game-separator"></div>
+                <div class="right-column">
+                    <div class="stats-panel">
+                        <div class="stat-item">
+                            <span class="label">答对次数</span>
+                            <span class="value" id="correct-count-display">0 / 30</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="label">已用时</span>
+                            <span class="value" id="total-time">00:00</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="label">平均反应时间</span>
+                            <div>
+                                <span class="value" id="avg-reaction-time">--</span>
+                                <span class="unit">ms</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="right-bottom-controls">
+                        <div id="lives-container"></div>
+                        <button id="restart-button">重新开始</button>
+                    </div>
                 </div>
             </div>
         </div>
-
-        <!-- 结束弹窗 -->
-        <div id="end-game-modal" class="screen">
-            <h2 class="modal-title">挑战结束</h2>
-            <p id="modal-countdown"></p>
-            <button id="confirm-end-button">返回首页</button>
+        
+        <div id="confirmation-modal" class="screen modal">
+            <div class="modal-content">
+                <h3 class="modal-title">确定要重新开始吗？</h3>
+                <div class="modal-buttons">
+                    <button id="modal-cancel" class="modal-button">取消</button>
+                    <button id="modal-confirm" class="modal-button">确定</button>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        // --- 游戏主逻辑 ---
         document.addEventListener('DOMContentLoaded', () => {
-            // DOM 元素获取
+            // DOM Elements
             const welcomeScreen = document.getElementById('welcome-screen');
             const gameScreen = document.getElementById('game-screen');
-            const endGameModal = document.getElementById('end-game-modal');
             const startButton = document.getElementById('start-button');
+            const restartButton = document.getElementById('restart-button');
+            
+            const roundTimerContainer = document.querySelector('.round-timer-bar-container');
+            const roundTimerBar = document.getElementById('round-timer-bar');
+
             const fixationCross = document.getElementById('fixation-cross');
             const stroopWord = document.getElementById('stroop-word');
-            const optionButtons = document.querySelectorAll('.option-btn');
-            const roundProgressBar = document.getElementById('round-progress-bar');
-            const livesContainer = document.getElementById('lives-container');
-            const correctCountSpan = document.getElementById('correct-count');
+            const feedbackContainer = document.getElementById('feedback-container');
+            const feedbackIcon = document.getElementById('feedback-icon');
+            const feedbackText = document.getElementById('feedback-text');
+            
+            const correctCountDisplay = document.getElementById('correct-count-display');
             const totalTimeSpan = document.getElementById('total-time');
             const avgReactionTimeSpan = document.getElementById('avg-reaction-time');
-            const feedbackTextContainer = document.getElementById('feedback-text-container');
-            const feedbackText = document.getElementById('feedback-text');
-            const modalTitle = endGameModal.querySelector('.modal-title');
-            const modalCountdownSpan = document.getElementById('modal-countdown');
-            const confirmEndButton = document.getElementById('confirm-end-button');
+            
+            const optionsContainer = document.getElementById('options-container');
+            const livesContainer = document.getElementById('lives-container');
 
-            // 游戏配置与常量
-            const TARGET_CORRECT = 30;
-            const ROUND_DURATION = 3000; // 每回合3秒
-            const FEEDBACK_DURATION = 1500;
-            const FIXATION_DURATION = 500;
-            const WORDS = ['红', '黄', '绿', '蓝', '白'];
-            const COLORS = { '红': 'red', '黄': 'yellow', '绿': 'green', '蓝': 'blue', '白': 'white' };
-            const COLOR_NAMES_CHINESE = Object.keys(COLORS);
+            const confirmationModal = document.getElementById('confirmation-modal');
+            const modalConfirmBtn = document.getElementById('modal-confirm');
+            const modalCancelBtn = document.getElementById('modal-cancel');
 
-            // 游戏状态变量
+            // SVG Icons
+            const checkmarkSVG = `<path fill="none" stroke="var(--correct-color)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" d="M20,50 L40,70 L80,30" />`;
+            const crossSVG = `<path fill="none" stroke="var(--incorrect-color)" stroke-width="8" stroke-linecap="round" d="M20,20 L80,80 M80,20 L20,80" />`;
+            
+            // Config
+            const TARGET_CORRECT = 30, ROUND_DURATION = 3000, FEEDBACK_DURATION = 2000, FIXATION_DURATION = 500;
+            const WORDS = ['红', '黄', '绿', '蓝', '白'], COLORS = { '红': 'red', '黄': 'yellow', '绿': 'green', '蓝': 'blue', '白': 'white' };
+            
+            // State
             let lives, correctCount, totalReactionTime, totalTime, roundStartTime;
             let gameActive = false;
-            let totalTimerInterval, roundTimer, feedbackTimeout;
+            let totalTimerInterval, roundTimer, mainTimeout;
 
-            // 初始化
             function init() {
+                // Pre-populate buttons and hearts
+                WORDS.forEach(word => {
+                    const btn = document.createElement('button');
+                    btn.className = 'option-btn';
+                    btn.dataset.color = COLORS[word];
+                    btn.textContent = word;
+                    optionsContainer.appendChild(btn);
+                });
+                for (let i = 0; i < 3; i++) {
+                    const heart = document.createElement('span');
+                    heart.className = 'heart';
+                    heart.innerHTML = '♥';
+                    livesContainer.appendChild(heart);
+                }
+
+                // Event Listeners
                 startButton.addEventListener('click', startGame);
-                confirmEndButton.addEventListener('click', () => {
-                    clearTimeout(feedbackTimeout); // Stop any pending return
+                restartButton.addEventListener('click', () => confirmationModal.classList.add('visible'));
+                modalConfirmBtn.addEventListener('click', () => {
+                    confirmationModal.classList.remove('visible');
                     returnToWelcome();
                 });
-                optionButtons.forEach(button => button.addEventListener('click', handleResponse));
+                modalCancelBtn.addEventListener('click', () => confirmationModal.classList.remove('visible'));
+                optionsContainer.querySelectorAll('.option-btn').forEach(button => {
+                    button.addEventListener('click', e => handleResponse(e, false));
+                });
             }
 
-            // 切换屏幕
             function switchScreen(hideScreen, showScreen) {
                 hideScreen.classList.remove('visible');
                 setTimeout(() => showScreen.classList.add('visible'), 500);
             }
             
             function returnToWelcome() {
+                gameActive = false;
+                clearAllTimers();
                 const currentVisible = document.querySelector('.screen.visible');
-                if (currentVisible) {
-                    currentVisible.classList.remove('visible');
-                }
+                if (currentVisible) currentVisible.classList.remove('visible');
                 setTimeout(() => welcomeScreen.classList.add('visible'), 500);
             }
 
-            // 开始游戏
+            function clearAllTimers() {
+                clearInterval(totalTimerInterval);
+                clearTimeout(roundTimer);
+                clearTimeout(mainTimeout);
+            }
+
             function startGame() {
-                switchScreen(welcomeScreen, gameScreen);
+                if (gameActive) clearAllTimers();
+                const currentScreen = document.querySelector('.screen.visible') || welcomeScreen;
+                switchScreen(currentScreen, gameScreen);
+                
                 gameActive = true;
+                lives = 3; correctCount = 0; totalReactionTime = 0; totalTime = 0;
                 
-                // 重置状态
-                lives = 3;
-                correctCount = 0;
-                totalReactionTime = 0;
-                totalTime = 0;
-                
-                // 重置UI
+                // Reset UI
                 livesContainer.querySelectorAll('.heart').forEach(h => h.classList.remove('lost'));
                 avgReactionTimeSpan.textContent = '--';
-                
-                // 启动总计时器
+                totalTimeSpan.textContent = '00:00';
+                correctCountDisplay.textContent = `0 / ${TARGET_CORRECT}`;
+
                 totalTimerInterval = setInterval(() => {
                     totalTime++;
-                    const minutes = String(Math.floor(totalTime / 60)).padStart(2, '0');
-                    const seconds = String(totalTime % 60).padStart(2, '0');
-                    totalTimeSpan.textContent = `${minutes}:${seconds}`;
+                    totalTimeSpan.textContent = `${String(Math.floor(totalTime/60)).padStart(2, '0')}:${String(totalTime%60).padStart(2, '0')}`;
                 }, 1000);
-
+                
                 prepareNextRound();
             }
             
-            // 结束游戏
             function endGame(isSuccess) {
                 gameActive = false;
-                clearInterval(totalTimerInterval);
-                clearTimeout(roundTimer);
-                clearTimeout(feedbackTimeout);
+                clearAllTimers();
                 
-                modalTitle.textContent = isSuccess ? '挑战成功!' : '挑战失败!';
-                switchScreen(gameScreen, endGameModal);
-
-                let countdown = 5;
-                const updateCountdown = () => modalCountdownSpan.textContent = `(${countdown}秒后自动返回)`;
-                updateCountdown();
-                feedbackTimeout = setInterval(() => {
-                    countdown--;
-                    if (countdown <= 0) {
-                        clearInterval(feedbackTimeout);
-                        returnToWelcome();
-                    } else {
-                        updateCountdown();
-                    }
-                }, 1000);
+                const title = isSuccess ? '挑战成功!' : '挑战失败!';
+                // Re-use confirmation modal as end-game display
+                confirmationModal.querySelector('.modal-title').textContent = title;
+                confirmationModal.querySelector('#modal-cancel').style.display = 'none';
+                confirmationModal.querySelector('#modal-confirm').textContent = '返回首页';
+                confirmationModal.classList.add('visible');
             }
 
-            // 准备下一回合
+            function setElementVisibility(visibleElement) {
+                [fixationCross, stroopWord, feedbackContainer].forEach(el => {
+                    el.classList.toggle('visible', el === visibleElement);
+                });
+            }
+
             function prepareNextRound() {
                 if (!gameActive) return;
-                
-                stroopWord.classList.remove('visible');
-                feedbackTextContainer.classList.remove('visible');
-                fixationCross.classList.add('visible');
-                
-                feedbackTimeout = setTimeout(showStimulus, FIXATION_DURATION);
+                setElementVisibility(fixationCross);
+                mainTimeout = setTimeout(showStimulus, FIXATION_DURATION);
             }
 
-            // 显示刺激
             function showStimulus() {
                 if (!gameActive) return;
-                
                 let randomWordText, randomColorName;
                 do {
                     randomWordText = WORDS[Math.floor(Math.random() * WORDS.length)];
-                    randomColorName = COLOR_NAMES_CHINESE[Math.floor(Math.random() * COLOR_NAMES_CHINESE.length)];
+                    randomColorName = Object.keys(COLORS)[Math.floor(Math.random() * WORDS.length)];
                 } while (randomWordText === randomColorName);
-
+                
                 stroopWord.textContent = randomWordText;
                 stroopWord.style.color = COLORS[randomColorName];
                 
-                fixationCross.classList.remove('visible');
-                stroopWord.classList.add('visible');
-                
+                setElementVisibility(stroopWord);
                 startRoundTimer();
                 roundStartTime = performance.now();
             }
             
-            // 回合倒计时
             function startRoundTimer() {
-                let timeLeftInRound = ROUND_DURATION;
-                roundProgressBar.classList.remove('urgent');
-                roundProgressBar.style.transition = 'none'; // Reset transition for instant update
-                roundProgressBar.style.width = '100%';
+                clearTimeout(roundTimer);
+                roundTimerContainer.classList.add('visible');
+                roundTimerBar.style.transition = 'none';
+                roundTimerBar.style.width = '100%';
+                
+                setTimeout(() => { // Use timeout to prevent layout thrashing
+                    roundTimerBar.style.transition = `width ${ROUND_DURATION}ms linear`;
+                    roundTimerBar.style.width = '0%';
+                }, 20);
 
-                const timerStep = 20; // Update every 20ms
-                roundTimer = setInterval(() => {
-                    timeLeftInRound -= timerStep;
-                    const progress = (timeLeftInRound / ROUND_DURATION) * 100;
-                    roundProgressBar.style.transition = `width ${timerStep}ms linear`;
-                    roundProgressBar.style.width = `${progress}%`;
-                    
-                    // 紧张效果
-                    if (timeLeftInRound <= 1000) {
-                        roundProgressBar.classList.add('urgent');
-                    }
-
-                    if (timeLeftInRound <= 0) {
-                        clearInterval(roundTimer);
-                        handleResponse(null, true); // Timeout
-                    }
-                }, timerStep);
+                roundTimer = setTimeout(() => handleResponse(null, true), ROUND_DURATION);
             }
 
-            // 处理响应
             function handleResponse(event, isTimeout = false) {
-                if (!roundStartTime) return; // 防止重复点击
-                clearInterval(roundTimer);
-
+                if (!roundStartTime) return;
+                clearTimeout(roundTimer);
+                
                 const reactionTime = Math.round(performance.now() - roundStartTime);
-                roundStartTime = 0; // 重置
+                roundStartTime = 0;
                 
-                let isCorrect = false;
-                if (!isTimeout) {
-                    const selectedColor = event.target.dataset.color;
-                    const actualColor = stroopWord.style.color;
-                    isCorrect = selectedColor === actualColor;
-                }
+                let isCorrect = !isTimeout && (event.target.dataset.color === stroopWord.style.color);
                 
-                stroopWord.classList.remove('visible');
+                roundTimerContainer.classList.remove('visible');
+                setElementVisibility(null); // Hide all center elements
+                
                 showFeedback(isCorrect, reactionTime);
                 updateStats(isCorrect, reactionTime);
 
-                if (gameActive) {
-                    feedbackTimeout = setTimeout(prepareNextRound, FEEDBACK_DURATION);
-                }
+                if (gameActive) mainTimeout = setTimeout(prepareNextRound, FEEDBACK_DURATION);
             }
             
-            // 显示反馈
             function showFeedback(isCorrect, reactionTime) {
-                const color = isCorrect ? getComputedStyle(document.documentElement).getPropertyValue('--correct-color') : getComputedStyle(document.documentElement).getPropertyValue('--incorrect-color');
-                createFireworks(color);
+                const color = isCorrect ? 'var(--correct-color)' : 'var(--incorrect-color)';
+                feedbackIcon.innerHTML = isCorrect ? checkmarkSVG : crossSVG;
+                createFireworks(getComputedStyle(document.documentElement).getPropertyValue(color).trim());
                 
-                feedbackText.textContent = isCorrect 
-                    ? `真棒，答对啦！反应时间: ${reactionTime}ms` 
-                    : `哎呦，答错啦！`;
-                feedbackTextContainer.classList.add('visible');
+                feedbackText.innerHTML = `${isCorrect ? '真棒，答对啦！' : '哎呀，答错啦！'}<br>你的反应时间为${reactionTime}毫秒`;
+                setElementVisibility(feedbackContainer);
             }
 
-            // 更新统计数据
             function updateStats(isCorrect, reactionTime) {
                 if (isCorrect) {
-                    correctCount++;
-                    totalReactionTime += reactionTime;
+                    correctCount++; totalReactionTime += reactionTime;
                 } else {
                     lives--;
-                    const hearts = livesContainer.querySelectorAll('.heart:not(.lost)');
-                    if (hearts.length > 0) {
-                        const heartToLose = hearts[0];
-                        heartToLose.classList.add('lost');
-                        // 在心碎的位置触发粒子效果
-                        const rect = heartToLose.getBoundingClientRect();
-                        const panelRect = heartToLose.closest('.panel-container').getBoundingClientRect();
-                        const x = rect.left - panelRect.left + rect.width / 2;
-                        const y = rect.top - panelRect.top + rect.height / 2;
-                        createHeartbreak(x, y);
+                    const heart = livesContainer.querySelector(`.heart:nth-child(${lives + 1})`);
+                    if (heart) {
+                        heart.classList.add('lost');
+                        const rect = heart.getBoundingClientRect(), panelRect = heart.closest('.panel-container').getBoundingClientRect();
+                        createHeartbreak(rect.left - panelRect.left + rect.width / 2, rect.top - panelRect.top + rect.height / 2);
                     }
                 }
                 
-                correctCountSpan.textContent = correctCount;
+                correctCountDisplay.textContent = `${correctCount} / ${TARGET_CORRECT}`;
                 avgReactionTimeSpan.textContent = correctCount > 0 ? Math.round(totalReactionTime / correctCount) : '--';
-                
-                // 检查游戏是否结束
-                if (lives <= 0) {
-                    endGame(false); // 失败
-                } else if (correctCount >= TARGET_CORRECT) {
-                    endGame(true); // 成功
-                }
+
+                if (lives <= 0) endGame(false);
+                else if (correctCount >= TARGET_CORRECT) endGame(true);
             }
             
             init();
         });
 
-        // --- 粒子效果脚本 ---
+        // --- Particle Effects (largely unchanged, coordinates adjusted) ---
         (function() {
-            // 背景粒子
-            const bgCanvas = document.getElementById('particle-canvas');
-            const bgCtx = bgCanvas.getContext('2d');
-            bgCanvas.width = window.innerWidth;
-            bgCanvas.height = window.innerHeight;
+             const bgCanvas = document.getElementById('particle-canvas'), bgCtx = bgCanvas.getContext('2d');
+            bgCanvas.width = window.innerWidth; bgCanvas.height = window.innerHeight;
             let bgParticles;
-
             class BgParticle {
-                constructor(x, y, dirX, dirY, size, color) { this.x=x; this.y=y; this.dirX=dirX; this.dirY=dirY; this.size=size; this.color=color; }
-                draw() { bgCtx.beginPath(); bgCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false); bgCtx.fillStyle = this.color; bgCtx.fill(); }
-                update() {
-                    if (this.x > bgCanvas.width || this.x < 0) this.dirX = -this.dirX;
-                    if (this.y > bgCanvas.height || this.y < 0) this.dirY = -this.dirY;
-                    this.x += this.dirX; this.y += this.dirY; this.draw();
-                }
+                constructor(x, y, dX, dY, s, c) {this.x=x;this.y=y;this.dirX=dX;this.dirY=dY;this.size=s;this.color=c;}
+                draw(){bgCtx.beginPath();bgCtx.arc(this.x,this.y,this.size,0,Math.PI*2,false);bgCtx.fillStyle=this.color;bgCtx.fill();}
+                update(){if(this.x>bgCanvas.width||this.x<0)this.dirX=-this.dirX;if(this.y>bgCanvas.height||this.y<0)this.dirY=-this.dirY;this.x+=this.dirX;this.y+=this.dirY;this.draw();}
             }
+            function initBg(){bgParticles=[];let n=(bgCanvas.height*bgCanvas.width)/9e3;for(let i=0;i<n;i++){let s=Math.random()*2+1,x=Math.random()*(innerWidth-s*2)+s*2,y=Math.random()*(innerHeight-s*2)+s*2,dX=(Math.random()*.4)-.2,dY=(Math.random()*.4)-.2,c='rgba(0,170,255,0.2)';bgParticles.push(new BgParticle(x,y,dX,dY,s,c));}}
+            function connectBg(){for(let a=0;a<bgParticles.length;a++){for(let b=a;b<bgParticles.length;b++){let d=(bgParticles[a].x-bgParticles[b].x)**2+(bgParticles[a].y-bgParticles[b].y)**2;if(d<(bgCanvas.width/7)*(bgCanvas.height/7)){let o=1-(d/2e4);bgCtx.strokeStyle=`rgba(0,170,255,${o*0.3})`;bgCtx.lineWidth=1;bgCtx.beginPath();bgCtx.moveTo(bgParticles[a].x,bgParticles[a].y);bgCtx.lineTo(bgParticles[b].x,bgParticles[b].y);bgCtx.stroke();}}}}
+            function animateBg(){requestAnimationFrame(animateBg);bgCtx.clearRect(0,0,innerWidth,innerHeight);bgParticles.forEach(p=>p.update());connectBg();}
+            window.addEventListener('resize',()=>{bgCanvas.width=innerWidth;bgCanvas.height=innerHeight;initBg();});
+            initBg();animateBg();
 
-            function initBgParticles() {
-                bgParticles = [];
-                let num = (bgCanvas.height * bgCanvas.width) / 9000;
-                for (let i = 0; i < num; i++) {
-                    let size = (Math.random() * 2) + 1;
-                    let x = (Math.random() * ((innerWidth - size * 2) - (size * 2)) + size * 2);
-                    let y = (Math.random() * ((innerHeight - size * 2) - (size * 2)) + size * 2);
-                    let dirX = (Math.random() * .4) - .2; let dirY = (Math.random() * .4) - .2;
-                    let color = 'rgba(0, 170, 255, 0.5)';
-                    bgParticles.push(new BgParticle(x, y, dirX, dirY, size, color));
-                }
-            }
-
-            function connectBgParticles() {
-                for (let a = 0; a < bgParticles.length; a++) {
-                    for (let b = a; b < bgParticles.length; b++) {
-                        let dist = ((bgParticles[a].x - bgParticles[b].x) * (bgParticles[a].x - bgParticles[b].x)) + ((bgParticles[a].y - bgParticles[b].y) * (bgParticles[a].y - bgParticles[b].y));
-                        if (dist < (bgCanvas.width / 7) * (bgCanvas.height / 7)) {
-                            let opacity = 1 - (dist / 20000);
-                            bgCtx.strokeStyle = `rgba(0, 170, 255, ${opacity})`;
-                            bgCtx.lineWidth = 1; bgCtx.beginPath();
-                            bgCtx.moveTo(bgParticles[a].x, bgParticles[a].y);
-                            bgCtx.lineTo(bgParticles[b].x, bgParticles[b].y); bgCtx.stroke();
-                        }
-                    }
-                }
-            }
-
-            function animateBg() { requestAnimationFrame(animateBg); bgCtx.clearRect(0,0,innerWidth,innerHeight); bgParticles.forEach(p => p.update()); connectBgParticles(); }
-            
-            window.addEventListener('resize', () => { bgCanvas.width = innerWidth; bgCanvas.height = innerHeight; initBgParticles(); });
-            initBgParticles();
-            animateBg();
-
-            // 反馈效果粒子 (烟花/心碎)
-            const feedbackCanvas = document.getElementById('feedback-canvas');
-            const fbCtx = feedbackCanvas.getContext('2d');
-            const panel = document.querySelector('.panel-container');
-            feedbackCanvas.width = panel.clientWidth;
-            feedbackCanvas.height = panel.clientHeight;
-            let effectParticles = [];
-            
+            const fbCanvas = document.getElementById('feedback-canvas'), fbCtx = fbCanvas.getContext('2d'), panel = document.querySelector('.panel-container');
+            let effectParticles=[];
             class EffectParticle {
-                constructor(x, y, color, velocity, isFirework) {
-                    this.x = x; this.y = y; this.color = color; this.velocity = velocity;
-                    this.alpha = 1; this.friction = 0.99; this.gravity = isFirework ? 0.05 : 0;
-                    this.size = Math.random() * 2 + 1;
-                }
-                draw() {
-                    fbCtx.save();
-                    fbCtx.globalAlpha = this.alpha;
-                    fbCtx.beginPath();
-                    fbCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                    fbCtx.fillStyle = this.color;
-                    fbCtx.fill();
-                    fbCtx.restore();
-                }
-                update() {
-                    this.draw();
-                    this.velocity.x *= this.friction;
-                    this.velocity.y *= this.friction;
-                    this.velocity.y += this.gravity;
-                    this.x += this.velocity.x;
-                    this.y += this.velocity.y;
-                    this.alpha -= 0.02;
-                }
+                constructor(x,y,c,v,isFw){this.x=x;this.y=y;this.color=c;this.velocity=v;this.alpha=1;this.friction=.98;this.gravity=isFw?.05:0;this.size=Math.random()*2+1;}
+                draw(){fbCtx.save();fbCtx.globalAlpha=this.alpha;fbCtx.beginPath();fbCtx.arc(this.x,this.y,this.size,0,Math.PI*2);fbCtx.fillStyle=this.color;fbCtx.fill();fbCtx.restore();}
+                update(){this.draw();this.velocity.x*=this.friction;this.velocity.y*=this.friction;this.velocity.y+=this.gravity;this.x+=this.velocity.x;this.y+=this.velocity.y;this.alpha-=.02;}
             }
-
-            window.createFireworks = (color) => {
-                const stimulusCenter = document.querySelector('.stimulus-centerpoint');
-                const rect = stimulusCenter.getBoundingClientRect();
-                const panelRect = panel.getBoundingClientRect();
-                const x = rect.left - panelRect.left + rect.width / 2;
-                const y = rect.top - panelRect.top + rect.height / 2;
-                const particleCount = 100;
-                for (let i = 0; i < particleCount; i++) {
-                    const angle = Math.random() * Math.PI * 2;
-                    const speed = Math.random() * 5 + 2;
-                    effectParticles.push(new EffectParticle(x, y, color, { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed }, true));
+            const resizeFbCanvas = () => { 
+                const area = document.querySelector('.word-display-area');
+                if (area && area.clientWidth > 0) {
+                    fbCanvas.width = area.clientWidth; fbCanvas.height = area.clientHeight; 
                 }
-            }
-
-            window.createHeartbreak = (x, y) => {
-                const particleCount = 30;
-                const color = getComputedStyle(document.documentElement).getPropertyValue('--heart-lost-color');
-                for (let i = 0; i < particleCount; i++) {
-                    const angle = Math.random() * Math.PI * 2;
-                    const speed = Math.random() * 2 + 1;
-                    effectParticles.push(new EffectParticle(x, y, color, { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed }, false));
-                }
-            }
-
-            function animateFeedback() {
-                requestAnimationFrame(animateFeedback);
-                fbCtx.clearRect(0, 0, feedbackCanvas.width, feedbackCanvas.height);
-                effectParticles.forEach((p, index) => {
-                    if (p.alpha <= 0) {
-                        effectParticles.splice(index, 1);
-                    } else {
-                        p.update();
-                    }
-                });
-            }
-            window.addEventListener('resize', () => { 
-                feedbackCanvas.width = panel.clientWidth; 
-                feedbackCanvas.height = panel.clientHeight; 
-            });
-            animateFeedback();
+            };
+            window.createFireworks=(c)=>{const x = fbCanvas.width/2, y = fbCanvas.height/2; for(let i=0;i<100;i++){const a=Math.random()*Math.PI*2,p=Math.random()*5+2;effectParticles.push(new EffectParticle(x,y,c,{x:Math.cos(a)*p,y:Math.sin(a)*p},!0));}}
+            window.createHeartbreak=(x,y)=>{const c=getComputedStyle(document.documentElement).getPropertyValue('--heart-lost-color');for(let i=0;i<30;i++){const a=Math.random()*Math.PI*2,p=Math.random()*2+1;effectParticles.push(new EffectParticle(x,y,c,{x:Math.cos(a)*p,y:Math.sin(a)*p},!1));}}
+            function animateFb(){requestAnimationFrame(animateFb);fbCtx.clearRect(0,0,fbCanvas.width,fbCanvas.height);effectParticles.forEach((p,i)=>{p.alpha<=0?effectParticles.splice(i,1):p.update();});}
+            window.addEventListener('resize', resizeFbCanvas);
+            setTimeout(resizeFbCanvas, 100); // Initial resize
+            animateFb();
         })();
-
     </script>
 </body>
 </html>
