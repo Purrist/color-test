@@ -13,6 +13,7 @@
             --secondary-text: #7a8aa8;
             --correct-color: #39ff84;
             --incorrect-color: #ff397a;
+            --missed-color: #555; /* Color for the missed cross */
             --font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
             font-size: calc(10px + 0.5vw);
         }
@@ -97,7 +98,7 @@
         #feedback-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
         .centered-element {
             position: absolute; opacity: 0; transform: scale(0.9);
-            transition: opacity 0.3s ease, transform 0.3s ease;
+            transition: opacity 0.2s ease, transform 0.2s ease;
             text-align: center; display: flex; justify-content: center; align-items: center;
             width: 70%; max-width: 300px; aspect-ratio: 1 / 1;
         }
@@ -105,6 +106,8 @@
         .word-box { border: 1px solid rgba(0, 194, 255, 0.2); border-radius: 20px; box-shadow: 0 0 25px rgba(0, 194, 255, 0.15); }
         #fixation-cross { font-size: 7rem; font-weight: 900; color: var(--secondary-text); }
         #stroop-word { font-size: 8rem; font-weight: 900; }
+        #feedback-container { flex-direction: column; font-size: 1.2rem; gap: 1rem; }
+        #feedback-icon { width: 5rem; height: 5rem; }
         
         .bottom-bar { display: flex; justify-content: space-between; align-items: center; }
         #main-timer-display { font-size: 1.8rem; font-weight: 600; color: var(--primary-text); margin-left: 6rem; }
@@ -163,6 +166,10 @@
                     <canvas id="feedback-canvas"></canvas>
                     <div id="fixation-cross" class="centered-element">+</div>
                     <div id="stroop-word" class="centered-element word-box"></div>
+                    <div id="feedback-container" class="centered-element">
+                        <svg id="feedback-icon" viewBox="0 0 100 100"></svg>
+                        <p id="feedback-text"></p>
+                    </div>
                 </div>
                 <div class="stats-column right-stats">
                     <div class="stat-item"><span class="value" id="accuracy">--</span><span class="label">准确率</span></div>
@@ -193,20 +200,28 @@
             const startButton = document.getElementById('start-button'), restartButton = document.getElementById('restart-button');
             const trialProgressBar = document.getElementById('trial-progress-bar');
             const fixationCross = document.getElementById('fixation-cross'), stroopWord = document.getElementById('stroop-word');
+            const feedbackContainer = document.getElementById('feedback-container'), feedbackIcon = document.getElementById('feedback-icon'), feedbackText = document.getElementById('feedback-text');
             const correctCountSpan = document.getElementById('correct-count'), incorrectCountSpan = document.getElementById('incorrect-count'), missedCountSpan = document.getElementById('missed-count');
             const accuracySpan = document.getElementById('accuracy'), avgReactionTimeSpan = document.getElementById('avg-reaction-time');
             const mainTimerDisplay = document.getElementById('main-timer-display');
             const optionsContainer = document.getElementById('options-container');
             const confirmationModal = document.getElementById('confirmation-modal'), modalConfirmBtn = document.getElementById('modal-confirm'), modalCancelBtn = document.getElementById('modal-cancel');
             
+            // --- SVG Icons ---
+            const checkmarkSVG = `<path fill="none" stroke="var(--correct-color)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" d="M20,50 L40,70 L80,30" />`;
+            const crossSVG = `<path fill="none" stroke="var(--incorrect-color)" stroke-width="8" stroke-linecap="round" d="M20,20 L80,80 M80,20 L20,80" />`;
+            const blackCrossSVG = `<path fill="none" stroke="var(--missed-color)" stroke-width="8" stroke-linecap="round" d="M20,20 L80,80 M80,20 L20,80" />`;
+
+            // --- Game Config ---
             const GAME_DURATION = 120;
             const TRIAL_DURATION = 2000;
             const STIMULUS_VISIBLE_DURATION = 500;
+            const FEEDBACK_DURATION = 500; // <-- NEW: Feedback duration set to 0.5s
             const FIXATION_DURATION = 500;
             
             const WORDS = ['红', '黄', '绿', '蓝', '白'], COLORS = { '红': 'red', '黄': 'yellow', '绿': 'green', '蓝': 'blue', '白': 'white' };
             let correctCount, incorrectCount, missedCount, totalReactionTime, timeLeft, trialStartTime, gameActive = false;
-            let mainGameTimer, trialInterval, hideWordTimeout;
+            let mainGameTimer, trialInterval, hideWordTimeout, mainTimeout;
 
             function init() {
                 WORDS.forEach(word => {
@@ -219,12 +234,12 @@
                 optionsContainer.querySelectorAll('.option-btn').forEach(button => button.addEventListener('click', e => handleResponse(e, false)));
             }
 
-            function clearAllTimers() { clearInterval(mainGameTimer); clearInterval(trialInterval); clearTimeout(hideWordTimeout); }
+            function clearAllTimers() { clearInterval(mainGameTimer); clearInterval(trialInterval); clearTimeout(hideWordTimeout); clearTimeout(mainTimeout); }
             function switchScreen(hide, show) { hide.classList.remove('visible'); setTimeout(() => show.classList.add('visible'), 500); }
             function returnToWelcome() { gameActive = false; clearAllTimers(); switchScreen(gameScreen, welcomeScreen); }
 
             function startGame() {
-                clearAllTimers(); // Clear any previous game timers
+                clearAllTimers();
                 switchScreen(welcomeScreen, gameScreen);
                 gameActive = true;
                 correctCount = 0; incorrectCount = 0; missedCount = 0; totalReactionTime = 0; timeLeft = GAME_DURATION;
@@ -238,15 +253,23 @@
                 clearAllTimers();
             }
 
+            function setElementVisibility(visibleElement) {
+                [fixationCross, stroopWord, feedbackContainer].forEach(el => el.classList.toggle('visible', el === visibleElement));
+            }
+
             function prepareNextRound() {
                 if (!gameActive) return;
-                fixationCross.classList.add('visible');
-                setTimeout(showStimulus, FIXATION_DURATION);
+                setElementVisibility(null); // Hide everything first
+                feedbackContainer.classList.remove('visible'); // Ensure feedback is hidden
+                mainTimeout = setTimeout(() => {
+                    setElementVisibility(fixationCross);
+                    mainTimeout = setTimeout(showStimulus, FIXATION_DURATION);
+                }, 10); // A small delay to ensure clean state
             }
 
             function showStimulus() {
                 if (!gameActive) return;
-                fixationCross.classList.remove('visible');
+                setElementVisibility(null);
                 let randomWordText, randomColorName;
                 do {
                     randomWordText = WORDS[Math.floor(Math.random() * WORDS.length)];
@@ -254,7 +277,7 @@
                 } while (randomWordText === randomColorName);
                 stroopWord.innerHTML = `<span>${randomWordText}</span>`;
                 stroopWord.querySelector('span').style.color = COLORS[randomColorName];
-                stroopWord.classList.add('visible');
+                setElementVisibility(stroopWord);
                 hideWordTimeout = setTimeout(() => stroopWord.classList.remove('visible'), STIMULUS_VISIBLE_DURATION);
                 startTrialTimer();
                 trialStartTime = performance.now();
@@ -264,39 +287,22 @@
                 clearInterval(trialInterval);
                 trialProgressBar.classList.remove('flashing-slow', 'flashing-fast');
                 trialProgressBar.classList.add('visible');
-                
                 let timeLeftInTrial = TRIAL_DURATION;
                 const timerStep = 20;
-
-                // --- FIX: Set initial state explicitly before animation starts ---
-                trialProgressBar.style.transition = 'none'; // Disable transition for instant change
+                trialProgressBar.style.transition = 'none';
                 trialProgressBar.style.width = '100%';
-                trialProgressBar.style.backgroundColor = 'hsl(120, 100%, 50%)'; // Start as green
-
-                // Force browser to repaint. A tiny timeout is the classic way.
+                trialProgressBar.style.backgroundColor = 'hsl(120, 100%, 50%)';
                 setTimeout(() => {
                     trialInterval = setInterval(() => {
                         timeLeftInTrial -= timerStep;
                         const progress = Math.max(0, timeLeftInTrial / TRIAL_DURATION);
-                        
-                        // Only update width via JS. Let CSS handle color transition.
                         trialProgressBar.style.width = `${progress * 100}%`;
-                        
-                        const hue = 120 * progress; // 120 (green) -> 0 (red)
+                        const hue = 120 * progress;
                         trialProgressBar.style.backgroundColor = `hsl(${hue}, 100%, 50%)`;
-                        
-                        if (progress < 0.25) {
-                            trialProgressBar.classList.remove('flashing-slow');
-                            trialProgressBar.classList.add('flashing-fast');
-                        } else if (progress < 0.5) {
-                            trialProgressBar.classList.add('flashing-slow');
-                        } else {
-                             trialProgressBar.classList.remove('flashing-slow', 'flashing-fast');
-                        }
-
-                        if (timeLeftInTrial <= 0) {
-                            handleResponse(null, true);
-                        }
+                        if (progress < 0.25) { trialProgressBar.classList.add('flashing-fast'); trialProgressBar.classList.remove('flashing-slow'); } 
+                        else if (progress < 0.5) { trialProgressBar.classList.add('flashing-slow'); }
+                        else { trialProgressBar.classList.remove('flashing-slow', 'flashing-fast'); }
+                        if (timeLeftInTrial <= 0) handleResponse(null, true);
                     }, timerStep);
                 }, 20);
             }
@@ -306,30 +312,63 @@
                 const reactionTime = Math.round(performance.now() - trialStartTime);
                 clearInterval(trialInterval); clearTimeout(hideWordTimeout);
                 trialStartTime = 0;
-                
                 stroopWord.classList.remove('visible');
                 trialProgressBar.classList.remove('visible');
-
+                
+                let status = 'incorrect';
                 if (isTimeout) {
+                    status = 'missed';
                     missedCount++;
                 } else {
                     const isCorrect = event.target.dataset.color === stroopWord.querySelector('span').style.color;
                     if (isCorrect) {
+                        status = 'correct';
                         correctCount++; totalReactionTime += reactionTime;
-                        createFireworks();
                     } else {
                         incorrectCount++;
-                        createFailureSparks();
                     }
                 }
+                
+                showFeedback(status, reactionTime);
                 updateAllDisplays();
-                if(gameActive) prepareNextRound();
+
+                if(gameActive) {
+                    mainTimeout = setTimeout(prepareNextRound, FEEDBACK_DURATION);
+                }
+            }
+            
+            function showFeedback(status, reactionTime) {
+                setElementVisibility(null); // Hide all first
+                let iconSVG, textHTML, particlesFunc;
+                
+                switch(status) {
+                    case 'correct':
+                        iconSVG = checkmarkSVG;
+                        textHTML = `真棒，答对啦！<br>你的反应时间为${reactionTime}毫秒`;
+                        particlesFunc = createFireworks;
+                        break;
+                    case 'incorrect':
+                        iconSVG = crossSVG;
+                        textHTML = '诶哟，答错了';
+                        particlesFunc = createFailureSparks;
+                        break;
+                    case 'missed':
+                        iconSVG = blackCrossSVG;
+                        textHTML = '哎呀，漏答了';
+                        particlesFunc = createFailureSparks;
+                        break;
+                }
+
+                feedbackIcon.innerHTML = iconSVG;
+                feedbackText.innerHTML = textHTML;
+                particlesFunc();
+                setElementVisibility(feedbackContainer);
             }
 
             function updateMainTimer() {
                 timeLeft--;
                 if (timeLeft <= 0) {
-                    timeLeft = 0; // Prevent display from going to -1
+                    timeLeft = 0;
                     endGame();
                 }
                 updateAllDisplays();
