@@ -114,7 +114,10 @@
         .bottom-bar {
             display: flex; justify-content: space-between; align-items: center;
         }
-        #main-timer-display { font-size: 1.8rem; font-weight: 600; color: var(--primary-text); }
+        #main-timer-display { 
+            font-size: 1.8rem; font-weight: 600; color: var(--primary-text); 
+            margin-left: 6rem; /*  <-- 在这里微调：计时器右移 */
+        }
         #options-container { display: flex; gap: 1rem; justify-content: center; }
         .option-btn {
             width: 65px; height: 65px; font-size: 1.2rem;
@@ -128,6 +131,7 @@
             font-size: 1rem; font-weight: bold; color: var(--primary-text);
             background-color: #4a4a52; padding: 0.7rem 1.5rem;
             border-radius: 10px; border: none; cursor: pointer; transition: all 0.2s ease;
+            margin-right: 5rem; /* <-- 在这里微调：按钮左移 */
         }
         #restart-button:hover:not(:disabled) { background-color: var(--glow-color); color: #fff; }
         #restart-button:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -221,7 +225,7 @@
                 });
                 startButton.addEventListener('click', startGame);
                 restartButton.addEventListener('click', () => {
-                     if (gameActive) return; // Prevent clicking during game
+                     if (gameActive) return; 
                      confirmationModal.classList.add('visible');
                 });
                 modalConfirmBtn.addEventListener('click', () => { confirmationModal.classList.remove('visible'); returnToWelcome(); });
@@ -304,7 +308,7 @@
                     }
                 }
                 updateAllDisplays();
-                prepareNextRound();
+                if(gameActive) prepareNextRound();
             }
 
             function updateMainTimer() {
@@ -319,8 +323,8 @@
                 correctCountSpan.textContent = correctCount;
                 incorrectCountSpan.textContent = incorrectCount;
                 missedCountSpan.textContent = missedCount;
-                const totalTrials = correctCount + incorrectCount + missedCount;
-                accuracySpan.textContent = totalTrials > 0 ? `${((correctCount / totalTrials) * 100).toFixed(1)}%` : '--';
+                const totalAnswered = correctCount + incorrectCount;
+                accuracySpan.textContent = totalAnswered > 0 ? `${((correctCount / totalAnswered) * 100).toFixed(1)}%` : '--';
                 avgReactionTimeSpan.textContent = correctCount > 0 ? `${Math.round(totalReactionTime / correctCount)} ms` : '--';
                 mainTimerDisplay.textContent = `${String(Math.floor(timeLeft/60)).padStart(2,'0')}:${String(timeLeft%60).padStart(2,'0')}`;
             }
