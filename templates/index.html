@@ -77,9 +77,8 @@
         }
         #trial-progress-bar.visible { opacity: 1; }
         
-        /* --- 闪烁动画 --- */
-        @keyframes flash-slow { 50% { opacity: 0.5; } }
-        @keyframes flash-fast { 50% { opacity: 0.3; } }
+        @keyframes flash-slow { 50% { filter: brightness(0.7); } }
+        @keyframes flash-fast { 50% { filter: brightness(0.5); } }
         .flashing-slow { animation: flash-slow 0.8s infinite; }
         .flashing-fast { animation: flash-fast 0.4s infinite; }
 
@@ -225,6 +224,7 @@
             function returnToWelcome() { gameActive = false; clearAllTimers(); switchScreen(gameScreen, welcomeScreen); }
 
             function startGame() {
+                clearAllTimers(); // Clear any previous game timers
                 switchScreen(welcomeScreen, gameScreen);
                 gameActive = true;
                 correctCount = 0; incorrectCount = 0; missedCount = 0; totalReactionTime = 0; timeLeft = GAME_DURATION;
@@ -266,30 +266,39 @@
                 trialProgressBar.classList.add('visible');
                 
                 let timeLeftInTrial = TRIAL_DURATION;
-                const timerStep = 20; // ms, update frequency
+                const timerStep = 20;
 
-                trialInterval = setInterval(() => {
-                    timeLeftInTrial -= timerStep;
-                    const progress = timeLeftInTrial / TRIAL_DURATION;
-                    
-                    // Update width
-                    trialProgressBar.style.width = `${progress * 100}%`;
-                    
-                    // Update color and flashing
-                    const hue = 120 * progress; // 120 (green) -> 0 (red)
-                    trialProgressBar.style.backgroundColor = `hsl(${hue}, 100%, 50%)`;
-                    
-                    if (progress < 0.25) {
-                        trialProgressBar.classList.remove('flashing-slow');
-                        trialProgressBar.classList.add('flashing-fast');
-                    } else if (progress < 0.5) {
-                        trialProgressBar.classList.add('flashing-slow');
-                    }
+                // --- FIX: Set initial state explicitly before animation starts ---
+                trialProgressBar.style.transition = 'none'; // Disable transition for instant change
+                trialProgressBar.style.width = '100%';
+                trialProgressBar.style.backgroundColor = 'hsl(120, 100%, 50%)'; // Start as green
 
-                    if (timeLeftInTrial <= 0) {
-                        handleResponse(null, true);
-                    }
-                }, timerStep);
+                // Force browser to repaint. A tiny timeout is the classic way.
+                setTimeout(() => {
+                    trialInterval = setInterval(() => {
+                        timeLeftInTrial -= timerStep;
+                        const progress = Math.max(0, timeLeftInTrial / TRIAL_DURATION);
+                        
+                        // Only update width via JS. Let CSS handle color transition.
+                        trialProgressBar.style.width = `${progress * 100}%`;
+                        
+                        const hue = 120 * progress; // 120 (green) -> 0 (red)
+                        trialProgressBar.style.backgroundColor = `hsl(${hue}, 100%, 50%)`;
+                        
+                        if (progress < 0.25) {
+                            trialProgressBar.classList.remove('flashing-slow');
+                            trialProgressBar.classList.add('flashing-fast');
+                        } else if (progress < 0.5) {
+                            trialProgressBar.classList.add('flashing-slow');
+                        } else {
+                             trialProgressBar.classList.remove('flashing-slow', 'flashing-fast');
+                        }
+
+                        if (timeLeftInTrial <= 0) {
+                            handleResponse(null, true);
+                        }
+                    }, timerStep);
+                }, 20);
             }
 
             function handleResponse(event, isTimeout) {
@@ -319,7 +328,10 @@
 
             function updateMainTimer() {
                 timeLeft--;
-                if (timeLeft <= 0) endGame();
+                if (timeLeft <= 0) {
+                    timeLeft = 0; // Prevent display from going to -1
+                    endGame();
+                }
                 updateAllDisplays();
             }
             
@@ -327,10 +339,8 @@
                 correctCountSpan.textContent = correctCount;
                 incorrectCountSpan.textContent = incorrectCount;
                 missedCountSpan.textContent = missedCount;
-                
                 const totalTrials = correctCount + incorrectCount + missedCount;
                 accuracySpan.textContent = totalTrials > 0 ? `${((correctCount / totalTrials) * 100).toFixed(1)}%` : '--';
-                
                 avgReactionTimeSpan.textContent = correctCount > 0 ? `${Math.round(totalReactionTime / correctCount)} ms` : '--';
                 mainTimerDisplay.textContent = `${String(Math.floor(timeLeft/60)).padStart(2,'0')}:${String(timeLeft%60).padStart(2,'0')}`;
             }
