@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>色词匹配 · 极限挑战</title>
     <style>
+        /* --- Root Variables and Basic Settings (No Change) --- */
         :root {
             --primary-bg: #101018;
             --panel-bg-container: rgba(22, 22, 26, 0.7);
@@ -13,11 +14,9 @@
             --secondary-text: #7a8aa8;
             --correct-color: #39ff84;
             --incorrect-color: #ff397a;
-            --missed-color: #555; /* Color for the missed cross */
             --font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
             font-size: calc(10px + 0.5vw);
         }
-
         body {
             background-color: var(--primary-bg);
             color: var(--primary-text);
@@ -29,9 +28,7 @@
             justify-content: center;
             align-items: center;
         }
-        
         #particle-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
-        
         .panel-container {
             width: 90vw; height: 90vh; max-width: 1200px; max-height: 750px;
             background: var(--panel-bg-container);
@@ -41,7 +38,6 @@
             box-shadow: 0 0 50px rgba(0, 194, 255, 0.1), inset 0 0 10px rgba(0, 194, 255, 0.1);
             position: relative; overflow: hidden; display: flex;
         }
-
         .screen {
             position: absolute; width: 100%; height: 100%;
             display: flex; flex-direction: column;
@@ -52,6 +48,7 @@
         }
         .screen.visible { opacity: 1; transform: scale(1); pointer-events: auto; }
 
+        /* --- Welcome Screen (No Change) --- */
         #welcome-screen { gap: 1.5rem; text-align: center; }
         .main-title { font-size: 2.5rem; font-weight: 700; color: #fff; text-shadow: 0 0 15px var(--glow-color); }
         .instructions-text { font-size: 1.1rem; color: var(--secondary-text); max-width: 50ch; line-height: 1.7; }
@@ -63,12 +60,11 @@
         }
         #start-button:hover { transform: translateY(-4px) scale(1.03); box-shadow: 0 8px 25px rgba(0, 170, 255, 0.7); }
 
-        /* --- 游戏界面布局 --- */
+        /* --- Game Screen Base Layout (PC/Tablet) (No Change) --- */
         #game-screen {
             display: flex; flex-direction: column; align-items: stretch;
             gap: 1.5rem; padding: 2rem 3rem;
         }
-        
         .top-bar {
             width: 100%; height: 6px; background-color: rgba(255,255,255,0.1); border-radius: 3px;
         }
@@ -88,7 +84,6 @@
             grid-template-columns: 1fr 1.5fr 1fr;
             flex-grow: 1; gap: 2rem; align-items: center;
         }
-
         .stats-column { display: flex; flex-direction: column; justify-content: center; gap: 3rem; }
         .stat-item { text-align: center; }
         .stat-item .value { font-size: 2.2rem; font-weight: 600; color: #fff; }
@@ -128,6 +123,7 @@
         }
         #restart-button:hover { background-color: var(--glow-color); color: #fff; }
 
+        /* --- Modal Styles (No Change) --- */
         .modal {
             z-index: 10; gap: 1rem; background: rgba(0,0,0,0.6);
             position: absolute; width: 100%; height: 100%; border-radius: 20px;
@@ -138,6 +134,67 @@
         .modal-button { font-size: 1rem; border: none; border-radius: 8px; padding: 0.6rem 1.5rem; cursor: pointer; }
         #modal-confirm { background-color: var(--incorrect-color); color: #fff; }
         #modal-cancel { background-color: #555; color: var(--primary-text); }
+
+
+        /* 
+        ==================================================================
+        --- NEW: Mobile Responsive Styles (For screens <= 768px wide) ---
+        ==================================================================
+        */
+        @media (max-width: 768px) {
+            /* Adjust overall layout for mobile */
+            #game-screen {
+                padding: 1.5rem;
+                gap: 1rem;
+            }
+
+            /* Change main grid to a vertical stack */
+            .main-content-grid {
+                grid-template-columns: 1fr; /* Single column */
+                grid-template-rows: auto 1fr auto; /* Stats, Center, Stats */
+                gap: 1.5rem;
+                align-items: center; /* Center items in the single column */
+            }
+
+            /* Move stats columns and change their layout */
+            .stats-column {
+                flex-direction: row; /* Horizontal layout for stats */
+                justify-content: space-around; /* Space them out */
+                gap: 1rem;
+                width: 100%;
+            }
+
+            .stats-column.left-stats { grid-row: 1; }
+            .word-display-area { grid-row: 2; }
+            .stats-column.right-stats { grid-row: 3; }
+
+            .stat-item .value { font-size: 1.8rem; }
+            .stat-item .label { font-size: 0.8rem; }
+            
+            /* Adjust central display area */
+            .centered-element {
+                width: 80%; /* Make the box larger on mobile */
+            }
+            #stroop-word { font-size: 6rem; }
+
+            /* Rearrange bottom bar for mobile */
+            .bottom-bar {
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+            #main-timer-display {
+                grid-row: 1; /* Position timer at the top of the bottom bar area */
+                order: -2; /* Visually move it to the top */
+                margin: 0;
+            }
+            #options-container {
+                grid-row: 2;
+                order: -1; /* Move options below timer */
+            }
+            #restart-button {
+                display: none; /* Hide restart button on mobile to save space, or style as needed */
+            }
+        }
     </style>
 </head>
 <body>
