@@ -200,7 +200,7 @@
         <div id="welcome-screen" class="screen visible">
             <h1 class="main-title">色词匹配挑战</h1>
             <img id="emoji" src="{{ url_for('static', filename='asset/emoji.gif') }}" alt="动态表情">
-            <p class="instructions-text">你将有3次机会，挑战答对30道题。每题限时3秒。你需要忽略文字的含义，识别出它呈现的颜色。</p>
+            <p class="instructions-text">游戏规则： 你将有3次机会，挑战答对30道题。每题限时2秒钟。你需要忽略文字的含义，识别出它呈现的颜色。</p>
             <button id="start-button">开始挑战</button>
         </div>
 
@@ -274,7 +274,7 @@
             
             const checkmarkSVG = `<path fill="none" stroke="var(--correct-color)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" d="M20,50 L40,70 L80,30" />`;
             const crossSVG = `<path fill="none" stroke="var(--incorrect-color)" stroke-width="8" stroke-linecap="round" d="M20,20 L80,80 M80,20 L20,80" />`;
-            const TARGET_CORRECT = 30, ROUND_DURATION = 3000, FEEDBACK_DURATION = 2000, FIXATION_DURATION = 500;
+            const TARGET_CORRECT = 30, ROUND_DURATION = 2000, FEEDBACK_DURATION = 1500, FIXATION_DURATION = 500;
             const WORDS = ['红', '黄', '绿', '蓝', '白'], COLORS = { '红': 'red', '黄': 'yellow', '绿': 'green', '蓝': 'blue', '白': 'white' };
             let lives, correctCount, totalReactionTime, totalTime, roundStartTime, gameActive = false, totalTimerInterval, roundTimer, mainTimeout;
 
