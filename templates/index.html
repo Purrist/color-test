@@ -73,51 +73,42 @@
         }
         #trial-progress-bar {
             width: 100%; height: 100%; background-color: var(--glow-color); border-radius: 3px;
-            transition: width 0.1s linear; opacity: 0;
+            transition: width 0.1s linear, background-color 0.2s linear; opacity: 0;
         }
         #trial-progress-bar.visible { opacity: 1; }
+        
+        /* --- 闪烁动画 --- */
+        @keyframes flash-slow { 50% { opacity: 0.5; } }
+        @keyframes flash-fast { 50% { opacity: 0.3; } }
+        .flashing-slow { animation: flash-slow 0.8s infinite; }
+        .flashing-fast { animation: flash-fast 0.4s infinite; }
 
         .main-content-grid {
             display: grid;
-            grid-template-columns: 1fr 1.5fr 1fr; /* left-stats, center, right-stats */
+            grid-template-columns: 1fr 1.5fr 1fr;
             flex-grow: 1; gap: 2rem; align-items: center;
         }
 
-        .stats-column {
-            display: flex; flex-direction: column;
-            justify-content: center; gap: 3rem;
-        }
+        .stats-column { display: flex; flex-direction: column; justify-content: center; gap: 3rem; }
         .stat-item { text-align: center; }
         .stat-item .value { font-size: 2.2rem; font-weight: 600; color: #fff; }
         .stat-item .label { font-size: 1rem; color: var(--secondary-text); margin-top: 0.5rem; display: block; }
         
-        .word-display-area {
-            position: relative; display: flex; justify-content: center; align-items: center;
-            height: 100%;
-        }
+        .word-display-area { position: relative; display: flex; justify-content: center; align-items: center; height: 100%; }
         #feedback-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
         .centered-element {
             position: absolute; opacity: 0; transform: scale(0.9);
             transition: opacity 0.3s ease, transform 0.3s ease;
-            text-align: center;
-            display: flex; justify-content: center; align-items: center;
+            text-align: center; display: flex; justify-content: center; align-items: center;
             width: 70%; max-width: 300px; aspect-ratio: 1 / 1;
         }
         .centered-element.visible { opacity: 1; transform: scale(1); }
-        .word-box {
-            border: 1px solid rgba(0, 194, 255, 0.2); border-radius: 20px;
-            box-shadow: 0 0 25px rgba(0, 194, 255, 0.15);
-        }
+        .word-box { border: 1px solid rgba(0, 194, 255, 0.2); border-radius: 20px; box-shadow: 0 0 25px rgba(0, 194, 255, 0.15); }
         #fixation-cross { font-size: 7rem; font-weight: 900; color: var(--secondary-text); }
         #stroop-word { font-size: 8rem; font-weight: 900; }
         
-        .bottom-bar {
-            display: flex; justify-content: space-between; align-items: center;
-        }
-        #main-timer-display { 
-            font-size: 1.8rem; font-weight: 600; color: var(--primary-text); 
-            margin-left: 6rem; /*  <-- 在这里微调：计时器右移 */
-        }
+        .bottom-bar { display: flex; justify-content: space-between; align-items: center; }
+        #main-timer-display { font-size: 1.8rem; font-weight: 600; color: var(--primary-text); margin-left: 6rem; }
         #options-container { display: flex; gap: 1rem; justify-content: center; }
         .option-btn {
             width: 65px; height: 65px; font-size: 1.2rem;
@@ -131,10 +122,9 @@
             font-size: 1rem; font-weight: bold; color: var(--primary-text);
             background-color: #4a4a52; padding: 0.7rem 1.5rem;
             border-radius: 10px; border: none; cursor: pointer; transition: all 0.2s ease;
-            margin-right: 5rem; /* <-- 在这里微调：按钮左移 */
+            margin-right: 5rem;
         }
-        #restart-button:hover:not(:disabled) { background-color: var(--glow-color); color: #fff; }
-        #restart-button:disabled { opacity: 0.5; cursor: not-allowed; }
+        #restart-button:hover { background-color: var(--glow-color); color: #fff; }
 
         .modal {
             z-index: 10; gap: 1rem; background: rgba(0,0,0,0.6);
@@ -210,30 +200,27 @@
             const optionsContainer = document.getElementById('options-container');
             const confirmationModal = document.getElementById('confirmation-modal'), modalConfirmBtn = document.getElementById('modal-confirm'), modalCancelBtn = document.getElementById('modal-cancel');
             
-            const GAME_DURATION = 120; // 2 minutes
-            const TRIAL_DURATION = 2000; // 2 seconds total response time
-            const STIMULUS_VISIBLE_DURATION = 500; // Word visible for 0.5s
-            const FIXATION_DURATION = 500; // Fixation cross for 0.5s
+            const GAME_DURATION = 120;
+            const TRIAL_DURATION = 2000;
+            const STIMULUS_VISIBLE_DURATION = 500;
+            const FIXATION_DURATION = 500;
             
             const WORDS = ['红', '黄', '绿', '蓝', '白'], COLORS = { '红': 'red', '黄': 'yellow', '绿': 'green', '蓝': 'blue', '白': 'white' };
             let correctCount, incorrectCount, missedCount, totalReactionTime, timeLeft, trialStartTime, gameActive = false;
-            let mainGameTimer, trialTimer, hideWordTimeout;
+            let mainGameTimer, trialInterval, hideWordTimeout;
 
             function init() {
                 WORDS.forEach(word => {
                     const btn = document.createElement('button'); btn.className = 'option-btn'; btn.dataset.color = COLORS[word]; btn.textContent = word; optionsContainer.appendChild(btn);
                 });
                 startButton.addEventListener('click', startGame);
-                restartButton.addEventListener('click', () => {
-                     if (gameActive) return; 
-                     confirmationModal.classList.add('visible');
-                });
+                restartButton.addEventListener('click', () => confirmationModal.classList.add('visible'));
                 modalConfirmBtn.addEventListener('click', () => { confirmationModal.classList.remove('visible'); returnToWelcome(); });
                 modalCancelBtn.addEventListener('click', () => confirmationModal.classList.remove('visible'));
                 optionsContainer.querySelectorAll('.option-btn').forEach(button => button.addEventListener('click', e => handleResponse(e, false)));
             }
 
-            function clearAllTimers() { clearInterval(mainGameTimer); clearTimeout(trialTimer); clearTimeout(hideWordTimeout); }
+            function clearAllTimers() { clearInterval(mainGameTimer); clearInterval(trialInterval); clearTimeout(hideWordTimeout); }
             function switchScreen(hide, show) { hide.classList.remove('visible'); setTimeout(() => show.classList.add('visible'), 500); }
             function returnToWelcome() { gameActive = false; clearAllTimers(); switchScreen(gameScreen, welcomeScreen); }
 
@@ -241,7 +228,6 @@
                 switchScreen(welcomeScreen, gameScreen);
                 gameActive = true;
                 correctCount = 0; incorrectCount = 0; missedCount = 0; totalReactionTime = 0; timeLeft = GAME_DURATION;
-                restartButton.disabled = true;
                 updateAllDisplays();
                 mainGameTimer = setInterval(updateMainTimer, 1000);
                 prepareNextRound();
@@ -250,7 +236,6 @@
             function endGame() {
                 gameActive = false;
                 clearAllTimers();
-                restartButton.disabled = false;
             }
 
             function prepareNextRound() {
@@ -276,20 +261,41 @@
             }
             
             function startTrialTimer() {
+                clearInterval(trialInterval);
+                trialProgressBar.classList.remove('flashing-slow', 'flashing-fast');
                 trialProgressBar.classList.add('visible');
-                trialProgressBar.style.transition = 'none';
-                trialProgressBar.style.width = '100%';
-                setTimeout(() => {
-                    trialProgressBar.style.transition = `width ${TRIAL_DURATION}ms linear`;
-                    trialProgressBar.style.width = '0%';
-                }, 20);
-                trialTimer = setTimeout(() => handleResponse(null, true), TRIAL_DURATION);
+                
+                let timeLeftInTrial = TRIAL_DURATION;
+                const timerStep = 20; // ms, update frequency
+
+                trialInterval = setInterval(() => {
+                    timeLeftInTrial -= timerStep;
+                    const progress = timeLeftInTrial / TRIAL_DURATION;
+                    
+                    // Update width
+                    trialProgressBar.style.width = `${progress * 100}%`;
+                    
+                    // Update color and flashing
+                    const hue = 120 * progress; // 120 (green) -> 0 (red)
+                    trialProgressBar.style.backgroundColor = `hsl(${hue}, 100%, 50%)`;
+                    
+                    if (progress < 0.25) {
+                        trialProgressBar.classList.remove('flashing-slow');
+                        trialProgressBar.classList.add('flashing-fast');
+                    } else if (progress < 0.5) {
+                        trialProgressBar.classList.add('flashing-slow');
+                    }
+
+                    if (timeLeftInTrial <= 0) {
+                        handleResponse(null, true);
+                    }
+                }, timerStep);
             }
 
             function handleResponse(event, isTimeout) {
                 if (!trialStartTime) return;
                 const reactionTime = Math.round(performance.now() - trialStartTime);
-                clearTimeout(trialTimer); clearTimeout(hideWordTimeout);
+                clearInterval(trialInterval); clearTimeout(hideWordTimeout);
                 trialStartTime = 0;
                 
                 stroopWord.classList.remove('visible');
@@ -313,18 +319,18 @@
 
             function updateMainTimer() {
                 timeLeft--;
-                const minutes = String(Math.floor(timeLeft/60)).padStart(2,'0');
-                const seconds = String(timeLeft%60).padStart(2,'0');
-                mainTimerDisplay.textContent = `${minutes}:${seconds}`;
                 if (timeLeft <= 0) endGame();
+                updateAllDisplays();
             }
             
             function updateAllDisplays() {
                 correctCountSpan.textContent = correctCount;
                 incorrectCountSpan.textContent = incorrectCount;
                 missedCountSpan.textContent = missedCount;
-                const totalAnswered = correctCount + incorrectCount;
-                accuracySpan.textContent = totalAnswered > 0 ? `${((correctCount / totalAnswered) * 100).toFixed(1)}%` : '--';
+                
+                const totalTrials = correctCount + incorrectCount + missedCount;
+                accuracySpan.textContent = totalTrials > 0 ? `${((correctCount / totalTrials) * 100).toFixed(1)}%` : '--';
+                
                 avgReactionTimeSpan.textContent = correctCount > 0 ? `${Math.round(totalReactionTime / correctCount)} ms` : '--';
                 mainTimerDisplay.textContent = `${String(Math.floor(timeLeft/60)).padStart(2,'0')}:${String(timeLeft%60).padStart(2,'0')}`;
             }
