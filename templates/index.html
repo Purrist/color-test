@@ -3,19 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>色词匹配挑战</title>
+    <title>色词匹配 · 极限挑战</title>
     <style>
         :root {
-            --primary-bg: #1e1e24;
+            --primary-bg: #101018;
             --panel-bg-container: rgba(22, 22, 26, 0.7);
-            --inner-panel-bg: #2d2d34;
-            --glow-color: #00aaff;
-            --primary-text: #e0e0e0;
-            --secondary-text: #888888;
+            --glow-color: #00c2ff;
+            --primary-text: #e8effc;
+            --secondary-text: #7a8aa8;
             --correct-color: #39ff84;
             --incorrect-color: #ff397a;
-            --heart-color: #ff4757;
-            --heart-lost-color: #444444;
             --font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
             font-size: calc(10px + 0.5vw);
         }
@@ -37,24 +34,19 @@
         .panel-container {
             width: 90vw; height: 90vh; max-width: 1200px; max-height: 750px;
             background: var(--panel-bg-container);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
             border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3);
-            position: relative;
-            overflow: hidden;
-            display: flex;
+            border: 1px solid rgba(0, 194, 255, 0.2);
+            box-shadow: 0 0 50px rgba(0, 194, 255, 0.1), inset 0 0 10px rgba(0, 194, 255, 0.1);
+            position: relative; overflow: hidden; display: flex;
         }
 
         .screen {
             position: absolute; width: 100%; height: 100%;
             display: flex; flex-direction: column;
             justify-content: center; align-items: center;
-            padding: 2rem 3rem; /* Add more horizontal padding */
-            box-sizing: border-box;
-            opacity: 0; transform: scale(0.98);
-            pointer-events: none;
+            padding: 2rem 3rem; box-sizing: border-box;
+            opacity: 0; transform: scale(0.98); pointer-events: none;
             transition: opacity 0.5s ease, transform 0.5s ease;
         }
         .screen.visible { opacity: 1; transform: scale(1); pointer-events: auto; }
@@ -72,113 +64,73 @@
 
         /* --- 游戏界面布局 --- */
         #game-screen {
-            flex-direction: column;
-            align-items: stretch;
-            gap: 0rem; /* Reduced gap to move progress bar down */
-            padding: 1.5rem 2.5rem; /* Adjusted padding */
+            display: flex; flex-direction: column; align-items: stretch;
+            gap: 1.5rem; padding: 2rem 3rem;
         }
         
-        .round-timer-bar-container {
+        .top-bar {
             width: 100%; height: 6px; background-color: rgba(255,255,255,0.1); border-radius: 3px;
-            opacity: 0; transition: opacity 0.3s ease;
         }
-        .round-timer-bar-container.visible { opacity: 1; }
-        #round-timer-bar {
+        #trial-progress-bar {
             width: 100%; height: 100%; background-color: var(--glow-color); border-radius: 3px;
-            transition: width 0.1s linear;
+            transition: width 0.1s linear; opacity: 0;
+        }
+        #trial-progress-bar.visible { opacity: 1; }
+
+        .main-content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr 1fr; /* left-stats, center, right-stats */
+            flex-grow: 1; gap: 2rem; align-items: center;
         }
 
-        .game-content-area {
-            display: flex;
-            flex-grow: 1;
-            gap: 1.5rem; /* Reduced gap to move columns closer */
+        .stats-column {
+            display: flex; flex-direction: column;
+            justify-content: center; gap: 3rem;
         }
-
-        .left-column {
-            flex: 2.5; /* Adjusted flex ratio */
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
+        .stat-item { text-align: center; }
+        .stat-item .value { font-size: 2.2rem; font-weight: 600; color: #fff; }
+        .stat-item .label { font-size: 1rem; color: var(--secondary-text); margin-top: 0.5rem; display: block; }
+        
         .word-display-area {
-            flex-grow: 1; width: 100%; position: relative;
-            display: flex; justify-content: center; align-items: center;
-            margin-bottom: 1rem; /* Pushes options up */
+            position: relative; display: flex; justify-content: center; align-items: center;
+            height: 100%;
         }
         #feedback-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
-        
         .centered-element {
             position: absolute; opacity: 0; transform: scale(0.9);
             transition: opacity 0.3s ease, transform 0.3s ease;
             text-align: center;
             display: flex; justify-content: center; align-items: center;
-            width: 55%; /* Slightly larger box */
-            max-width: 320px;
-            aspect-ratio: 1 / 1;
+            width: 70%; max-width: 300px; aspect-ratio: 1 / 1;
         }
         .centered-element.visible { opacity: 1; transform: scale(1); }
-        .word-box { border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 20px; }
+        .word-box {
+            border: 1px solid rgba(0, 194, 255, 0.2); border-radius: 20px;
+            box-shadow: 0 0 25px rgba(0, 194, 255, 0.15);
+        }
         #fixation-cross { font-size: 7rem; font-weight: 900; color: var(--secondary-text); }
         #stroop-word { font-size: 8rem; font-weight: 900; }
-        #feedback-container { flex-direction: column; font-size: 1.2rem; gap: 1rem; }
-        #feedback-icon { width: 5rem; height: 5rem; }
         
+        .bottom-bar {
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        #main-timer-display { font-size: 1.8rem; font-weight: 600; color: var(--primary-text); }
         #options-container { display: flex; gap: 1rem; justify-content: center; }
         .option-btn {
-            width: 70px; height: 70px; font-size: 1.2rem; /* Bigger buttons */
-            color: var(--primary-text);
-            background-color: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 15px; /* Rounded more */
+            width: 65px; height: 65px; font-size: 1.2rem;
+            color: var(--primary-text); background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 15px;
             cursor: pointer; transition: all 0.2s ease;
+            box-shadow: inset 0 0 5px rgba(0, 194, 255, 0.1);
         }
         .option-btn:hover { transform: translateY(-4px); border-color: var(--glow-color); }
-        
-        .right-column {
-            flex: 2; /* Adjusted flex ratio */
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .stats-panel-wrapper {
-            display: flex; align-items: center; flex-grow: 1; width: 100%;
-        }
-        .stats-panel {
-            width: 100%; /* Wider panel */
-            background-color: var(--inner-panel-bg);
-            border-radius: 15px;
-            padding: 2.5rem; /* More padding */
-            display: flex; flex-direction: column; gap: 2.5rem;
-            box-sizing: border-box;
-        }
-        .stat-item {
-            display: grid;
-            grid-template-columns: 1fr auto 1fr; /* label, value, unit */
-            align-items: baseline;
-            gap: 1rem;
-        }
-        .stat-item .label { font-size: 1.1rem; color: var(--secondary-text); text-align: left; }
-        .stat-item .value { font-size: 2rem; font-weight: bold; color: #fff; text-align: center; }
-        .stat-item .unit { font-size: 1rem; color: var(--secondary-text); text-align: right; }
-
-        .right-bottom-controls {
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 1rem;
-            box-sizing: border-box;
-        }
-        #lives-container { display: flex; gap: 1rem; font-size: 2.2rem; /* Bigger hearts */ }
-        .heart { color: var(--heart-color); transition: color 0.5s ease, transform 0.5s ease; }
-        .heart.lost { color: var(--heart-lost-color); transform: scale(0.8); }
         #restart-button {
             font-size: 1rem; font-weight: bold; color: var(--primary-text);
-            background-color: #4a4a52;
-            padding: 0.7rem 1.5rem; border-radius: 10px; border: none; cursor: pointer;
-            transition: all 0.2s ease;
+            background-color: #4a4a52; padding: 0.7rem 1.5rem;
+            border-radius: 10px; border: none; cursor: pointer; transition: all 0.2s ease;
         }
-        #restart-button:hover { background-color: var(--glow-color); color: #fff; }
+        #restart-button:hover:not(:disabled) { background-color: var(--glow-color); color: #fff; }
+        #restart-button:disabled { opacity: 0.5; cursor: not-allowed; }
 
         .modal {
             z-index: 10; gap: 1rem; background: rgba(0,0,0,0.6);
@@ -198,55 +150,36 @@
 
     <div class="panel-container">
         <div id="welcome-screen" class="screen visible">
-            <h1 class="main-title">色词匹配挑战</h1>
+             <h1 class="main-title">色词匹配 · 极限挑战</h1>
             <img id="emoji" src="{{ url_for('static', filename='asset/emoji.gif') }}" alt="动态表情">
-            <p class="instructions-text">游戏规则： 你将有3次机会，挑战答对30道题。每题限时2秒钟。你需要忽略文字的含义，识别出它呈现的颜色。</p>
+            <p class="instructions-text">在2分钟内尽可能多地完成挑战。每题的色字仅出现0.5秒，总作答时间为2秒。祝你好运！</p>
             <button id="start-button">开始挑战</button>
         </div>
 
         <div id="game-screen" class="screen">
-            <div class="round-timer-bar-container">
-                <div id="round-timer-bar"></div>
+            <div class="top-bar">
+                <div id="trial-progress-bar"></div>
             </div>
-            <div class="game-content-area">
-                <div class="left-column">
-                    <div class="word-display-area">
-                        <canvas id="feedback-canvas"></canvas>
-                        <div id="fixation-cross" class="centered-element">+</div>
-                        <div id="stroop-word" class="centered-element word-box"></div>
-                        <div id="feedback-container" class="centered-element">
-                             <svg id="feedback-icon" viewBox="0 0 100 100"></svg>
-                             <p id="feedback-text"></p>
-                        </div>
-                    </div>
-                    <div id="options-container"></div>
+            <div class="main-content-grid">
+                <div class="stats-column left-stats">
+                    <div class="stat-item"><span class="value" id="correct-count">0</span><span class="label">答对</span></div>
+                    <div class="stat-item"><span class="value" id="incorrect-count">0</span><span class="label">答错</span></div>
+                    <div class="stat-item"><span class="value" id="missed-count">0</span><span class="label">遗漏</span></div>
                 </div>
-                
-                <div class="right-column">
-                    <div class="stats-panel-wrapper">
-                        <div class="stats-panel">
-                            <div class="stat-item">
-                                <span class="label">答对次数</span>
-                                <span class="value" id="correct-count-display">0 / 30</span>
-                                <span class="unit">次</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="label">已用时</span>
-                                <span class="value" id="total-time">00:00</span>
-                                <span class="unit">分钟</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="label">平均反应时间</span>
-                                <span class="value" id="avg-reaction-time">--</span>
-                                <span class="unit">ms</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="right-bottom-controls">
-                        <div id="lives-container"></div>
-                        <button id="restart-button">重新开始</button>
-                    </div>
+                <div class="word-display-area">
+                    <canvas id="feedback-canvas"></canvas>
+                    <div id="fixation-cross" class="centered-element">+</div>
+                    <div id="stroop-word" class="centered-element word-box"></div>
                 </div>
+                <div class="stats-column right-stats">
+                    <div class="stat-item"><span class="value" id="accuracy">--</span><span class="label">准确率</span></div>
+                    <div class="stat-item"><span class="value" id="avg-reaction-time">--</span><span class="label">平均反应时间</span></div>
+                </div>
+            </div>
+            <div class="bottom-bar">
+                <span id="main-timer-display">02:00</span>
+                <div id="options-container"></div>
+                <button id="restart-button">重新开始</button>
             </div>
         </div>
         
@@ -265,88 +198,66 @@
         document.addEventListener('DOMContentLoaded', () => {
             const welcomeScreen = document.getElementById('welcome-screen'), gameScreen = document.getElementById('game-screen');
             const startButton = document.getElementById('start-button'), restartButton = document.getElementById('restart-button');
-            const roundTimerContainer = document.querySelector('.round-timer-bar-container'), roundTimerBar = document.getElementById('round-timer-bar');
+            const trialProgressBar = document.getElementById('trial-progress-bar');
             const fixationCross = document.getElementById('fixation-cross'), stroopWord = document.getElementById('stroop-word');
-            const feedbackContainer = document.getElementById('feedback-container'), feedbackIcon = document.getElementById('feedback-icon'), feedbackText = document.getElementById('feedback-text');
-            const correctCountDisplay = document.getElementById('correct-count-display'), totalTimeSpan = document.getElementById('total-time'), avgReactionTimeSpan = document.getElementById('avg-reaction-time');
-            const optionsContainer = document.getElementById('options-container'), livesContainer = document.getElementById('lives-container');
+            const correctCountSpan = document.getElementById('correct-count'), incorrectCountSpan = document.getElementById('incorrect-count'), missedCountSpan = document.getElementById('missed-count');
+            const accuracySpan = document.getElementById('accuracy'), avgReactionTimeSpan = document.getElementById('avg-reaction-time');
+            const mainTimerDisplay = document.getElementById('main-timer-display');
+            const optionsContainer = document.getElementById('options-container');
             const confirmationModal = document.getElementById('confirmation-modal'), modalConfirmBtn = document.getElementById('modal-confirm'), modalCancelBtn = document.getElementById('modal-cancel');
             
-            const checkmarkSVG = `<path fill="none" stroke="var(--correct-color)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" d="M20,50 L40,70 L80,30" />`;
-            const crossSVG = `<path fill="none" stroke="var(--incorrect-color)" stroke-width="8" stroke-linecap="round" d="M20,20 L80,80 M80,20 L20,80" />`;
-            const TARGET_CORRECT = 30, ROUND_DURATION = 2000, FEEDBACK_DURATION = 1500, FIXATION_DURATION = 500;
+            const GAME_DURATION = 120; // 2 minutes
+            const TRIAL_DURATION = 2000; // 2 seconds total response time
+            const STIMULUS_VISIBLE_DURATION = 500; // Word visible for 0.5s
+            const FIXATION_DURATION = 500; // Fixation cross for 0.5s
+            
             const WORDS = ['红', '黄', '绿', '蓝', '白'], COLORS = { '红': 'red', '黄': 'yellow', '绿': 'green', '蓝': 'blue', '白': 'white' };
-            let lives, correctCount, totalReactionTime, totalTime, roundStartTime, gameActive = false, totalTimerInterval, roundTimer, mainTimeout;
+            let correctCount, incorrectCount, missedCount, totalReactionTime, timeLeft, trialStartTime, gameActive = false;
+            let mainGameTimer, trialTimer, hideWordTimeout;
 
             function init() {
                 WORDS.forEach(word => {
                     const btn = document.createElement('button'); btn.className = 'option-btn'; btn.dataset.color = COLORS[word]; btn.textContent = word; optionsContainer.appendChild(btn);
                 });
-                for (let i = 0; i < 3; i++) {
-                    const heart = document.createElement('span'); heart.className = 'heart'; heart.innerHTML = '♥'; livesContainer.appendChild(heart);
-                }
                 startButton.addEventListener('click', startGame);
                 restartButton.addEventListener('click', () => {
-                    confirmationModal.querySelector('.modal-title').textContent = '确定要重新开始吗？';
-                    confirmationModal.querySelector('#modal-cancel').style.display = 'inline-block';
-                    confirmationModal.querySelector('#modal-confirm').textContent = '确定';
-                    confirmationModal.classList.add('visible');
+                     if (gameActive) return; // Prevent clicking during game
+                     confirmationModal.classList.add('visible');
                 });
-                modalConfirmBtn.addEventListener('click', () => {
-                    confirmationModal.classList.remove('visible'); returnToWelcome();
-                });
+                modalConfirmBtn.addEventListener('click', () => { confirmationModal.classList.remove('visible'); returnToWelcome(); });
                 modalCancelBtn.addEventListener('click', () => confirmationModal.classList.remove('visible'));
                 optionsContainer.querySelectorAll('.option-btn').forEach(button => button.addEventListener('click', e => handleResponse(e, false)));
             }
 
-            function switchScreen(hideScreen, showScreen) {
-                hideScreen.classList.remove('visible'); setTimeout(() => showScreen.classList.add('visible'), 500);
-            }
-            function returnToWelcome() {
-                gameActive = false; clearAllTimers();
-                const currentVisible = document.querySelector('.screen.visible');
-                if (currentVisible) currentVisible.classList.remove('visible');
-                setTimeout(() => welcomeScreen.classList.add('visible'), 500);
-            }
-            function clearAllTimers() { clearInterval(totalTimerInterval); clearTimeout(roundTimer); clearTimeout(mainTimeout); }
+            function clearAllTimers() { clearInterval(mainGameTimer); clearTimeout(trialTimer); clearTimeout(hideWordTimeout); }
+            function switchScreen(hide, show) { hide.classList.remove('visible'); setTimeout(() => show.classList.add('visible'), 500); }
+            function returnToWelcome() { gameActive = false; clearAllTimers(); switchScreen(gameScreen, welcomeScreen); }
 
             function startGame() {
-                if (gameActive) clearAllTimers();
-                const currentScreen = document.querySelector('.screen.visible') || welcomeScreen;
-                switchScreen(currentScreen, gameScreen);
+                switchScreen(welcomeScreen, gameScreen);
                 gameActive = true;
-                lives = 3; correctCount = 0; totalReactionTime = 0; totalTime = 0;
-                livesContainer.querySelectorAll('.heart').forEach(h => h.classList.remove('lost'));
-                avgReactionTimeSpan.textContent = '--'; totalTimeSpan.textContent = '00:00'; correctCountDisplay.textContent = `0 / ${TARGET_CORRECT}`;
-                totalTimerInterval = setInterval(() => {
-                    totalTime++;
-                    totalTimeSpan.textContent = `${String(Math.floor(totalTime/60)).padStart(2, '0')}:${String(totalTime%60).padStart(2, '0')}`;
-                }, 1000);
+                correctCount = 0; incorrectCount = 0; missedCount = 0; totalReactionTime = 0; timeLeft = GAME_DURATION;
+                restartButton.disabled = true;
+                updateAllDisplays();
+                mainGameTimer = setInterval(updateMainTimer, 1000);
                 prepareNextRound();
             }
             
-            function endGame(isSuccess) {
-                gameActive = false; clearAllTimers();
-                const title = isSuccess ? '挑战成功!' : '挑战失败!';
-                const endModal = document.getElementById('confirmation-modal');
-                endModal.querySelector('.modal-title').textContent = title;
-                endModal.querySelector('#modal-cancel').style.display = 'none';
-                endModal.querySelector('#modal-confirm').textContent = '返回首页';
-                endModal.classList.add('visible');
-            }
-
-            function setElementVisibility(visibleElement) {
-                [fixationCross, stroopWord, feedbackContainer].forEach(el => el.classList.toggle('visible', el === visibleElement));
+            function endGame() {
+                gameActive = false;
+                clearAllTimers();
+                restartButton.disabled = false;
             }
 
             function prepareNextRound() {
                 if (!gameActive) return;
-                setElementVisibility(fixationCross);
-                mainTimeout = setTimeout(showStimulus, FIXATION_DURATION);
+                fixationCross.classList.add('visible');
+                setTimeout(showStimulus, FIXATION_DURATION);
             }
 
             function showStimulus() {
                 if (!gameActive) return;
+                fixationCross.classList.remove('visible');
                 let randomWordText, randomColorName;
                 do {
                     randomWordText = WORDS[Math.floor(Math.random() * WORDS.length)];
@@ -354,59 +265,64 @@
                 } while (randomWordText === randomColorName);
                 stroopWord.innerHTML = `<span>${randomWordText}</span>`;
                 stroopWord.querySelector('span').style.color = COLORS[randomColorName];
-                setElementVisibility(stroopWord);
-                startRoundTimer();
-                roundStartTime = performance.now();
+                stroopWord.classList.add('visible');
+                hideWordTimeout = setTimeout(() => stroopWord.classList.remove('visible'), STIMULUS_VISIBLE_DURATION);
+                startTrialTimer();
+                trialStartTime = performance.now();
             }
             
-            function startRoundTimer() {
-                clearTimeout(roundTimer);
-                roundTimerContainer.classList.add('visible');
-                roundTimerBar.style.transition = 'none';
-                roundTimerBar.style.width = '100%';
+            function startTrialTimer() {
+                trialProgressBar.classList.add('visible');
+                trialProgressBar.style.transition = 'none';
+                trialProgressBar.style.width = '100%';
                 setTimeout(() => {
-                    roundTimerBar.style.transition = `width ${ROUND_DURATION}ms linear`;
-                    roundTimerBar.style.width = '0%';
+                    trialProgressBar.style.transition = `width ${TRIAL_DURATION}ms linear`;
+                    trialProgressBar.style.width = '0%';
                 }, 20);
-                roundTimer = setTimeout(() => handleResponse(null, true), ROUND_DURATION);
+                trialTimer = setTimeout(() => handleResponse(null, true), TRIAL_DURATION);
             }
 
-            function handleResponse(event, isTimeout = false) {
-                if (!roundStartTime) return;
-                clearTimeout(roundTimer);
-                const reactionTime = Math.round(performance.now() - roundStartTime);
-                roundStartTime = 0;
-                let isCorrect = !isTimeout && (event.target.dataset.color === stroopWord.querySelector('span').style.color);
-                roundTimerContainer.classList.remove('visible');
-                setElementVisibility(null);
-                showFeedback(isCorrect, reactionTime);
-                updateStats(isCorrect, reactionTime);
-                if (gameActive) mainTimeout = setTimeout(prepareNextRound, FEEDBACK_DURATION);
-            }
-            
-            function showFeedback(isCorrect, reactionTime) {
-                feedbackIcon.innerHTML = isCorrect ? checkmarkSVG : crossSVG;
-                isCorrect ? createFireworks() : createFailureSparks();
-                feedbackText.innerHTML = `${isCorrect ? '真棒，答对啦！' : '哎呀，答错啦！'}<br>你的反应时间为${reactionTime}毫秒`;
-                setElementVisibility(feedbackContainer);
-            }
+            function handleResponse(event, isTimeout) {
+                if (!trialStartTime) return;
+                const reactionTime = Math.round(performance.now() - trialStartTime);
+                clearTimeout(trialTimer); clearTimeout(hideWordTimeout);
+                trialStartTime = 0;
+                
+                stroopWord.classList.remove('visible');
+                trialProgressBar.classList.remove('visible');
 
-            function updateStats(isCorrect, reactionTime) {
-                if (isCorrect) {
-                    correctCount++; totalReactionTime += reactionTime;
+                if (isTimeout) {
+                    missedCount++;
                 } else {
-                    lives--;
-                    const heart = livesContainer.querySelector(`.heart:nth-child(${lives + 1})`);
-                    if (heart) {
-                        heart.classList.add('lost');
-                        const rect = heart.getBoundingClientRect(), panelRect = heart.closest('.panel-container').getBoundingClientRect();
-                        createHeartbreak(rect.left-panelRect.left+rect.width/2, rect.top-panelRect.top+rect.height/2);
+                    const isCorrect = event.target.dataset.color === stroopWord.querySelector('span').style.color;
+                    if (isCorrect) {
+                        correctCount++; totalReactionTime += reactionTime;
+                        createFireworks();
+                    } else {
+                        incorrectCount++;
+                        createFailureSparks();
                     }
                 }
-                correctCountDisplay.textContent = `${correctCount} / ${TARGET_CORRECT}`;
-                avgReactionTimeSpan.textContent = correctCount > 0 ? Math.round(totalReactionTime / correctCount) : '--';
-                if (lives <= 0) endGame(false);
-                else if (correctCount >= TARGET_CORRECT) endGame(true);
+                updateAllDisplays();
+                prepareNextRound();
+            }
+
+            function updateMainTimer() {
+                timeLeft--;
+                const minutes = String(Math.floor(timeLeft/60)).padStart(2,'0');
+                const seconds = String(timeLeft%60).padStart(2,'0');
+                mainTimerDisplay.textContent = `${minutes}:${seconds}`;
+                if (timeLeft <= 0) endGame();
+            }
+            
+            function updateAllDisplays() {
+                correctCountSpan.textContent = correctCount;
+                incorrectCountSpan.textContent = incorrectCount;
+                missedCountSpan.textContent = missedCount;
+                const totalTrials = correctCount + incorrectCount + missedCount;
+                accuracySpan.textContent = totalTrials > 0 ? `${((correctCount / totalTrials) * 100).toFixed(1)}%` : '--';
+                avgReactionTimeSpan.textContent = correctCount > 0 ? `${Math.round(totalReactionTime / correctCount)} ms` : '--';
+                mainTimerDisplay.textContent = `${String(Math.floor(timeLeft/60)).padStart(2,'0')}:${String(timeLeft%60).padStart(2,'0')}`;
             }
             
             init();
@@ -414,8 +330,8 @@
 
         (function() {
             const bgCanvas=document.getElementById('particle-canvas'),bgCtx=bgCanvas.getContext('2d');bgCanvas.width=window.innerWidth;bgCanvas.height=window.innerHeight;let bgParticles;class BgParticle{constructor(x,y,dX,dY,s,c){this.x=x;this.y=y;this.dirX=dX;this.dirY=dY;this.size=s;this.color=c;}draw(){bgCtx.beginPath();bgCtx.arc(this.x,this.y,this.size,0,Math.PI*2,false);bgCtx.fillStyle=this.color;bgCtx.fill();}update(){if(this.x>bgCanvas.width||this.x<0)this.dirX=-this.dirX;if(this.y>bgCanvas.height||this.y<0)this.dirY=-this.dirY;this.x+=this.dirX;this.y+=this.dirY;this.draw();}}
-            function initBg(){bgParticles=[];let n=(bgCanvas.height*bgCanvas.width)/9e3;for(let i=0;i<n;i++){let s=Math.random()*2+1,x=Math.random()*(innerWidth-s*2)+s*2,y=Math.random()*(innerHeight-s*2)+s*2,dX=(Math.random()*.4)-.2,dY=(Math.random()*.4)-.2,c='rgba(0,170,255,0.2)';bgParticles.push(new BgParticle(x,y,dX,dY,s,c));}}
-            function connectBg(){for(let a=0;a<bgParticles.length;a++){for(let b=a;b<bgParticles.length;b++){let d=(bgParticles[a].x-bgParticles[b].x)**2+(bgParticles[a].y-bgParticles[b].y)**2;if(d<(bgCanvas.width/7)*(bgCanvas.height/7)){let o=1-(d/2e4);bgCtx.strokeStyle=`rgba(0,170,255,${o*0.3})`;bgCtx.lineWidth=1;bgCtx.beginPath();bgCtx.moveTo(bgParticles[a].x,bgParticles[a].y);bgCtx.lineTo(bgParticles[b].x,bgParticles[b].y);bgCtx.stroke();}}}}
+            function initBg(){bgParticles=[];let n=(bgCanvas.height*bgCanvas.width)/9e3;for(let i=0;i<n;i++){let s=Math.random()*2+1,x=Math.random()*(innerWidth-s*2)+s*2,y=Math.random()*(innerHeight-s*2)+s*2,dX=(Math.random()*.4)-.2,dY=(Math.random()*.4)-.2,c='rgba(0,194,255,0.2)';bgParticles.push(new BgParticle(x,y,dX,dY,s,c));}}
+            function connectBg(){for(let a=0;a<bgParticles.length;a++){for(let b=a;b<bgParticles.length;b++){let d=(bgParticles[a].x-bgParticles[b].x)**2+(bgParticles[a].y-bgParticles[b].y)**2;if(d<(bgCanvas.width/7)*(bgCanvas.height/7)){let o=1-(d/2e4);bgCtx.strokeStyle=`rgba(0,194,255,${o*0.3})`;bgCtx.lineWidth=1;bgCtx.beginPath();bgCtx.moveTo(bgParticles[a].x,bgParticles[a].y);bgCtx.lineTo(bgParticles[b].x,bgParticles[b].y);bgCtx.stroke();}}}}
             function animateBg(){requestAnimationFrame(animateBg);bgCtx.clearRect(0,0,innerWidth,innerHeight);bgParticles.forEach(p=>p.update());connectBg();}
             window.addEventListener('resize',()=>{bgCanvas.width=innerWidth;bgCanvas.height=innerHeight;initBg();});initBg();animateBg();
             const fbCanvas=document.getElementById('feedback-canvas'),fbCtx=fbCanvas.getContext('2d');let effectParticles=[];
@@ -423,10 +339,9 @@
             EffectParticle.prototype.draw=function(){fbCtx.save();fbCtx.globalAlpha=this.alpha;fbCtx.beginPath();fbCtx.arc(this.x,this.y,this.size,0,Math.PI*2);fbCtx.fillStyle=this.color;fbCtx.fill();fbCtx.restore();}
             EffectParticle.prototype.update=function(){this.draw();this.velocity.x*=this.friction;this.velocity.y*=this.friction;this.velocity.y+=this.gravity;this.x+=this.velocity.x;this.y+=this.velocity.y;this.alpha-=.02;}
             const resizeFbCanvas=()=>{const a=document.querySelector('.word-display-area');if(a&&a.clientWidth>0){fbCanvas.width=a.clientWidth;fbCanvas.height=a.clientHeight;}};
-            function createEffect(x,y,colors,physics){for(let i=0;i<100;i++){const c=colors[Math.floor(Math.random()*colors.length)],a=Math.random()*Math.PI*2,p=Math.random()*5+2;effectParticles.push(new EffectParticle(x,y,c,{x:Math.cos(a)*p,y:Math.sin(a)*p},physics));}}
-            window.createFireworks=()=>{const x=fbCanvas.width/2,y=fbCanvas.height/2,c=['#ffdd00','#ff4757','#39ff84','#00aaff','#a259ff'];createEffect(x,y,c,{friction:.98,gravity:.05});}
-            window.createFailureSparks=()=>{const x=fbCanvas.width/2,y=fbCanvas.height/2,c=['#555','#444','#333'];createEffect(x,y,c,{friction:.97,gravity:.02});}
-            window.createHeartbreak=(x,y)=>{const c=['#444'];for(let i=0;i<30;i++){const a=Math.random()*Math.PI*2,p=Math.random()*2+1;effectParticles.push(new EffectParticle(x,y,c,{x:Math.cos(a)*p,y:Math.sin(a)*p},{friction:.95,gravity:0}));}}
+            function createEffect(x,y,colors,physics,count){for(let i=0;i<count;i++){const c=colors[Math.floor(Math.random()*colors.length)],a=Math.random()*Math.PI*2,p=Math.random()*5+2;effectParticles.push(new EffectParticle(x,y,c,{x:Math.cos(a)*p,y:Math.sin(a)*p},physics));}}
+            window.createFireworks=()=>{const x=fbCanvas.width/2,y=fbCanvas.height/2,c=['#ffdd00','#ff4757','#39ff84','#00aaff','#a259ff'];createEffect(x,y,c,{friction:.98,gravity:.05}, 100);}
+            window.createFailureSparks=()=>{const x=fbCanvas.width/2,y=fbCanvas.height/2,c=['#555','#444','#333'];createEffect(x,y,c,{friction:.97,gravity:.02}, 50);}
             function animateFb(){requestAnimationFrame(animateFb);fbCtx.clearRect(0,0,fbCanvas.width,fbCanvas.height);effectParticles.forEach((p,i)=>{p.alpha<=0?effectParticles.splice(i,1):p.update();});}
             window.addEventListener('resize',resizeFbCanvas);setTimeout(resizeFbCanvas,100);animateFb();
         })();
