@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>色词心流挑战</title>
+    <title>色词匹配挑战</title>
     <style>
         :root {
             --primary-bg: #1e1e24;
@@ -51,7 +51,8 @@
             position: absolute; width: 100%; height: 100%;
             display: flex; flex-direction: column;
             justify-content: center; align-items: center;
-            padding: 2rem; box-sizing: border-box;
+            padding: 2rem 3rem; /* Add more horizontal padding */
+            box-sizing: border-box;
             opacity: 0; transform: scale(0.98);
             pointer-events: none;
             transition: opacity 0.5s ease, transform 0.5s ease;
@@ -71,9 +72,10 @@
 
         /* --- 游戏界面布局 --- */
         #game-screen {
-            flex-direction: column; /* Main direction is vertical */
+            flex-direction: column;
             align-items: stretch;
-            gap: 1.5rem;
+            gap: 0rem; /* Reduced gap to move progress bar down */
+            padding: 1.5rem 2.5rem; /* Adjusted padding */
         }
         
         .round-timer-bar-container {
@@ -88,12 +90,12 @@
 
         .game-content-area {
             display: flex;
-            flex-grow: 1; /* Take remaining space */
-            gap: 2rem;
+            flex-grow: 1;
+            gap: 1.5rem; /* Reduced gap to move columns closer */
         }
 
         .left-column {
-            flex: 3;
+            flex: 2.5; /* Adjusted flex ratio */
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -101,6 +103,7 @@
         .word-display-area {
             flex-grow: 1; width: 100%; position: relative;
             display: flex; justify-content: center; align-items: center;
+            margin-bottom: 1rem; /* Pushes options up */
         }
         #feedback-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
         
@@ -109,7 +112,8 @@
             transition: opacity 0.3s ease, transform 0.3s ease;
             text-align: center;
             display: flex; justify-content: center; align-items: center;
-            width: 50%; max-width: 300px;
+            width: 55%; /* Slightly larger box */
+            max-width: 320px;
             aspect-ratio: 1 / 1;
         }
         .centered-element.visible { opacity: 1; transform: scale(1); }
@@ -121,36 +125,35 @@
         
         #options-container { display: flex; gap: 1rem; justify-content: center; }
         .option-btn {
-            width: 60px; height: 60px; font-size: 1.1rem; color: var(--primary-text);
+            width: 70px; height: 70px; font-size: 1.2rem; /* Bigger buttons */
+            color: var(--primary-text);
             background-color: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 12px; cursor: pointer; transition: all 0.2s ease;
+            border-radius: 15px; /* Rounded more */
+            cursor: pointer; transition: all 0.2s ease;
         }
         .option-btn:hover { transform: translateY(-4px); border-color: var(--glow-color); }
         
         .right-column {
-            flex: 2;
+            flex: 2; /* Adjusted flex ratio */
             display: flex;
             flex-direction: column;
-            justify-content: space-between; /* Pushes content to top and bottom */
+            justify-content: space-between;
             align-items: center;
         }
-        .stats-panel-wrapper { /* New wrapper to center the panel vertically */
-            display: flex;
-            align-items: center;
-            flex-grow: 1;
-            width: 100%;
+        .stats-panel-wrapper {
+            display: flex; align-items: center; flex-grow: 1; width: 100%;
         }
         .stats-panel {
-            width: 100%;
+            width: 100%; /* Wider panel */
             background-color: var(--inner-panel-bg);
             border-radius: 15px;
-            padding: 2rem;
-            display: flex; flex-direction: column; gap: 2rem;
+            padding: 2.5rem; /* More padding */
+            display: flex; flex-direction: column; gap: 2.5rem;
             box-sizing: border-box;
         }
         .stat-item {
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-columns: 1fr auto 1fr; /* label, value, unit */
             align-items: baseline;
             gap: 1rem;
         }
@@ -163,8 +166,10 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            padding: 0 1rem;
+            box-sizing: border-box;
         }
-        #lives-container { display: flex; gap: 1rem; font-size: 1.8rem; }
+        #lives-container { display: flex; gap: 1rem; font-size: 2.2rem; /* Bigger hearts */ }
         .heart { color: var(--heart-color); transition: color 0.5s ease, transform 0.5s ease; }
         .heart.lost { color: var(--heart-lost-color); transform: scale(0.8); }
         #restart-button {
@@ -193,9 +198,9 @@
 
     <div class="panel-container">
         <div id="welcome-screen" class="screen visible">
-            <h1 class="main-title">色词心流挑战</h1>
+            <h1 class="main-title">色词匹配挑战</h1>
             <img id="emoji" src="{{ url_for('static', filename='asset/emoji.gif') }}" alt="动态表情">
-            <p class="instructions-text">你将有3次机会，挑战答对30道题。每题限时3秒，超时或答错都将消耗一次机会。保持专注，挑战开始！</p>
+            <p class="instructions-text">你将有3次机会，挑战答对30道题。每题限时3秒。你需要忽略文字的含义，识别出它呈现的颜色。</p>
             <button id="start-button">开始挑战</button>
         </div>
 
@@ -216,6 +221,7 @@
                     </div>
                     <div id="options-container"></div>
                 </div>
+                
                 <div class="right-column">
                     <div class="stats-panel-wrapper">
                         <div class="stats-panel">
@@ -280,7 +286,12 @@
                     const heart = document.createElement('span'); heart.className = 'heart'; heart.innerHTML = '♥'; livesContainer.appendChild(heart);
                 }
                 startButton.addEventListener('click', startGame);
-                restartButton.addEventListener('click', () => confirmationModal.classList.add('visible'));
+                restartButton.addEventListener('click', () => {
+                    confirmationModal.querySelector('.modal-title').textContent = '确定要重新开始吗？';
+                    confirmationModal.querySelector('#modal-cancel').style.display = 'inline-block';
+                    confirmationModal.querySelector('#modal-confirm').textContent = '确定';
+                    confirmationModal.classList.add('visible');
+                });
                 modalConfirmBtn.addEventListener('click', () => {
                     confirmationModal.classList.remove('visible'); returnToWelcome();
                 });
