@@ -9,7 +9,8 @@
         :root {
             --primary-bg: #101018;
             --panel-bg-container: rgba(22, 22, 26, 0.7);
-            --glow-color: #00c2ff;
+            /* MODIFICATION POINT: Change this color to adjust the main blue theme */
+            --glow-color: #00aaff; /* Was #00c2ff, changed to a sky blue */
             --primary-text: #e8effc;
             --secondary-text: #7a8aa8;
             --correct-color: #39ff84;
@@ -65,19 +66,12 @@
             display: flex; flex-direction: column; align-items: stretch;
             gap: 1.5rem; padding: 2rem 3rem;
         }
-        .top-bar {
-            width: 100%; height: 6px; background-color: rgba(255,255,255,0.1); border-radius: 3px;
-        }
-        #trial-progress-bar {
-            width: 100%; height: 100%; background-color: var(--glow-color); border-radius: 3px;
-            transition: width 0.1s linear, background-color 0.2s linear; opacity: 0;
-        }
+        .top-bar { width: 100%; height: 6px; background-color: rgba(255,255,255,0.1); border-radius: 3px; }
+        #trial-progress-bar { width: 100%; height: 100%; background-color: var(--glow-color); border-radius: 3px; transition: width 0.1s linear, background-color 0.2s linear; opacity: 0; }
         #trial-progress-bar.visible { opacity: 1; }
         
         .main-content-grid {
-            display: grid;
-            grid-template-columns: 1fr 1.5fr 1fr;
-            grid-template-rows: 1fr;
+            display: grid; grid-template-columns: 1fr 1.5fr 1fr; grid-template-rows: 1fr;
             flex-grow: 1; gap: 2rem; align-items: center;
         }
         .stats-column { display: flex; flex-direction: column; justify-content: center; gap: 3rem; }
@@ -88,8 +82,7 @@
         .word-display-area { position: relative; display: flex; justify-content: center; align-items: center; height: 100%; }
         #feedback-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
         .centered-element {
-            position: absolute; opacity: 0; transform: scale(0.9);
-            transition: opacity 0.2s ease, transform 0.2s ease;
+            position: absolute; opacity: 0; transform: scale(0.9); transition: opacity 0.2s ease, transform 0.2s ease;
             text-align: center; display: flex; justify-content: center; align-items: center;
             width: 70%; max-width: 300px; aspect-ratio: 1 / 1;
         }
@@ -105,26 +98,19 @@
         .bottom-bar { display: flex; justify-content: space-between; align-items: center; }
         #main-timer-display { font-size: 1.8rem; font-weight: 600; color: var(--primary-text); margin-left: 6rem; }
         #restart-button {
-            font-size: 1rem; font-weight: bold; color: var(--primary-text);
-            background-color: #4a4a52; padding: 0.7rem 1.5rem;
-            border-radius: 10px; border: none; cursor: pointer; transition: all 0.2s ease;
-            margin-right: 5rem;
+            font-size: 1rem; font-weight: bold; color: var(--primary-text); background-color: #4a4a52; padding: 0.7rem 1.5rem;
+            border-radius: 10px; border: none; cursor: pointer; transition: all 0.2s ease; margin-right: 5rem;
         }
         
-        .bottom-bar #options-container-desktop {
-            display: flex; gap: 1rem; justify-content: center; flex-grow: 1;
-        }
+        .bottom-bar #options-container-desktop { display: flex; gap: 1rem; justify-content: center; flex-grow: 1; }
         .option-btn {
-            width: 65px; height: 65px; font-size: 1.2rem;
-            color: var(--primary-text); background-color: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 15px;
-            cursor: pointer; transition: all 0.2s ease;
+            width: 65px; height: 65px; font-size: 1.2rem; color: var(--primary-text); background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 15px; cursor: pointer; transition: all 0.2s ease;
             box-shadow: inset 0 0 5px rgba(0, 194, 255, 0.1);
         }
         .option-btn:hover { transform: translateY(-4px); border-color: var(--glow-color); }
         #restart-button:hover { background-color: var(--glow-color); color: #fff; }
 
-        /* --- Modal Styles --- */
         .modal { z-index: 10; gap: 1rem; background: rgba(0,0,0,0.6); position: absolute; width: 100%; height: 100%; border-radius: 20px; }
         .modal-content { background-color: var(--primary-bg); padding: 2rem 3rem; border-radius: 15px; text-align: center; }
         .modal-title { font-size: 1.5rem; font-weight: bold; color: #fff; margin-bottom: 1rem; }
@@ -133,45 +119,42 @@
         #modal-confirm { background-color: var(--incorrect-color); color: #fff; }
         #modal-cancel { background-color: #555; color: var(--primary-text); }
 
-
-        /* 
-        ==================================================================
-        --- REVISED: Mobile Responsive Styles (For screens <= 768px wide) ---
-        ==================================================================
-        */
         @media (max-width: 768px) {
-            #game-screen { padding: 1rem; justify-content: space-between; gap: 1rem; }
             :root { font-size: calc(9px + 0.5vw); }
+            
+            /* MODIFICATION: The entire game screen is now a grid for full layout control */
+            #game-screen {
+                display: grid;
+                padding: 1rem;
+                gap: 1rem;
+                /* --- 在这里自由调整手机端整体元素的上下顺序 --- */
+                grid-template-areas:
+                    "top"    /* 计时进度条 */
+                    "main"   /* 核心内容区 (颜色字、按钮、统计数据) */
+                    "bottom";  /* 底部计时器和重新开始按钮 */
+                grid-template-rows: auto 1fr auto;
+            }
+            .top-bar { grid-area: top; }
+            .main-content-grid { grid-area: main; }
+            .bottom-bar { grid-area: bottom; }
             
             .bottom-bar #options-container-desktop { display: none; }
 
             .main-content-grid {
                 display: grid;
-                flex-grow: 1;
                 grid-template-columns: 1fr 1fr;
-                
-                /* 
-                --- 自由调整移动端布局 ---
-                这里就是移动端布局的“控制中心”。
-                每一行用引号""包裹的就是一行。
-                你可以像移动文字一样，自由调整下面这几行的顺序，来改变页面元素的上下位置。
-                - "main main"      代表顶部的颜色文字区域
-                - "options options" 代表五个选择按钮
-                - "correct accuracy" 等三行代表统计数据区域
-                */
+                /* --- 在这里自由调整核心内容区内部元素的上下顺序 --- */
                 grid-template-areas:
-                    "main main"
+                    "main-word main-word"
                     "options options"
                     "correct accuracy"
                     "incorrect avg-rt"
                     "missed .";
-                
                 gap: 1.2rem 1.5rem;
             }
             
-            .word-display-area { grid-area: main; }
+            .word-display-area { grid-area: main-word; }
             #options-container { display: flex; grid-area: options; justify-content: center; gap: 0.8rem; }
-            
             .stats-column { display: contents; }
             .stats-column.left-stats .stat-item:nth-child(1) { grid-area: correct; }
             .stats-column.left-stats .stat-item:nth-child(2) { grid-area: incorrect; }
@@ -271,7 +254,7 @@
             
             const WORDS = ['红', '黄', '绿', '蓝', '白'], COLORS = { '红': 'red', '黄': 'gold', '绿': 'green', '蓝': 'blue', '白': 'white' };
             let correctCount, incorrectCount, missedCount, totalReactionTime, timeLeft, trialStartTime, gameActive = false;
-            let mainGameTimer, trialInterval, hideWordTimeout, mainTimeout;
+            let mainGameTimer, trialInterval, mainTimeout;
 
             function init() {
                 [optionsContainer, optionsContainerDesktop].forEach(container => {
@@ -287,7 +270,7 @@
 
                 startButton.addEventListener('click', startGame);
                 restartButton.addEventListener('click', () => confirmationModal.classList.add('visible'));
-                // MODIFIED: This now calls returnToWelcome() to go to the home screen.
+                // FIXED: Now calls returnToWelcome() to correctly go to the home screen.
                 modalConfirmBtn.addEventListener('click', () => { 
                     confirmationModal.classList.remove('visible'); 
                     returnToWelcome(); 
@@ -299,10 +282,9 @@
                 });
             }
 
-            function clearAllTimers() { clearInterval(mainGameTimer); clearInterval(trialInterval); clearTimeout(hideWordTimeout); clearTimeout(mainTimeout); }
+            function clearAllTimers() { clearInterval(mainGameTimer); clearInterval(trialInterval); clearTimeout(mainTimeout); }
             function switchScreen(hide, show) { hide.classList.remove('visible'); setTimeout(() => show.classList.add('visible'), 500); }
             
-            // NEW/FIXED: Function to properly return to the welcome screen.
             function returnToWelcome() {
                 gameActive = false;
                 clearAllTimers();
@@ -311,18 +293,7 @@
 
             function startGame() {
                 clearAllTimers();
-                // Ensure we always switch from welcome screen, even if restarting
-                if (!welcomeScreen.classList.contains('visible')) {
-                    switchScreen(gameScreen, welcomeScreen);
-                    // A small delay to let the screen switch before starting the game logic
-                    setTimeout(startGameLogic, 500);
-                } else {
-                    switchScreen(welcomeScreen, gameScreen);
-                    startGameLogic();
-                }
-            }
-            
-            function startGameLogic() {
+                switchScreen(welcomeScreen, gameScreen);
                 gameActive = true;
                 correctCount = 0; incorrectCount = 0; missedCount = 0; totalReactionTime = 0; timeLeft = GAME_DURATION;
                 updateAllDisplays();
@@ -342,7 +313,7 @@
             function prepareNextRound() { if (!gameActive) return; setElementVisibility(null); feedbackContainer.classList.remove('visible'); mainTimeout = setTimeout(() => { setElementVisibility(fixationCross); mainTimeout = setTimeout(showStimulus, FIXATION_DURATION); }, 10); }
             function showStimulus() { if (!gameActive) return; setElementVisibility(null); let randomWordText, randomColorValue; const colorValues = Object.values(COLORS); randomWordText = WORDS[Math.floor(Math.random() * WORDS.length)]; let tempColor; do { tempColor = colorValues[Math.floor(Math.random() * colorValues.length)]; } while (tempColor === COLORS[randomWordText]); randomColorValue = tempColor; stroopWord.innerHTML = `<span>${randomWordText}</span>`; stroopWord.querySelector('span').style.color = randomColorValue; setElementVisibility(stroopWord); startTrialTimer(); trialStartTime = performance.now(); }
             function startTrialTimer() { clearInterval(trialInterval); trialProgressBar.classList.remove('flashing-slow', 'flashing-fast'); trialProgressBar.classList.add('visible'); let timeLeftInTrial = TRIAL_DURATION; const timerStep = 20; trialProgressBar.style.transition = 'none'; trialProgressBar.style.width = '100%'; trialProgressBar.style.backgroundColor = 'hsl(120, 100%, 50%)'; setTimeout(() => { trialInterval = setInterval(() => { timeLeftInTrial -= timerStep; const progress = Math.max(0, timeLeftInTrial / TRIAL_DURATION); trialProgressBar.style.width = `${progress * 100}%`; const hue = 120 * progress; trialProgressBar.style.backgroundColor = `hsl(${hue}, 100%, 50%)`; if (progress < 0.25) { trialProgressBar.classList.add('flashing-fast'); trialProgressBar.classList.remove('flashing-slow'); } else if (progress < 0.5) { trialProgressBar.classList.add('flashing-slow'); } if (timeLeftInTrial <= 0) handleResponse(null, true); }, timerStep); }, 20); }
-            function handleResponse(event, isTimeout) { if (!trialStartTime) return; const reactionTime = Math.round(performance.now() - trialStartTime); clearInterval(trialInterval); clearTimeout(hideWordTimeout); trialStartTime = 0; stroopWord.classList.remove('visible'); trialProgressBar.classList.remove('visible', 'flashing-fast', 'flashing-slow'); let status = 'incorrect'; if (isTimeout) { status = 'missed'; missedCount++; } else { const isCorrect = event.target.dataset.color === stroopWord.querySelector('span').style.color; if (isCorrect) { status = 'correct'; correctCount++; totalReactionTime += reactionTime; } else { incorrectCount++; } } showFeedback(status, reactionTime); updateAllDisplays(); if(gameActive) { mainTimeout = setTimeout(prepareNextRound, FEEDBACK_DURATION); } }
+            function handleResponse(event, isTimeout) { if (!trialStartTime) return; const reactionTime = Math.round(performance.now() - trialStartTime); clearInterval(trialInterval); trialStartTime = 0; stroopWord.classList.remove('visible'); trialProgressBar.classList.remove('visible', 'flashing-fast', 'flashing-slow'); let status = 'incorrect'; if (isTimeout) { status = 'missed'; missedCount++; } else { const isCorrect = event.target.dataset.color === stroopWord.querySelector('span').style.color; if (isCorrect) { status = 'correct'; correctCount++; totalReactionTime += reactionTime; } else { incorrectCount++; } } showFeedback(status, reactionTime); updateAllDisplays(); if(gameActive) { mainTimeout = setTimeout(prepareNextRound, FEEDBACK_DURATION); } }
             function showFeedback(status, reactionTime) { setElementVisibility(null); let iconSVG, textHTML, particlesFunc; switch(status) { case 'correct': iconSVG = checkmarkSVG; textHTML = `真棒，答对啦！<br>你的反应时间为${reactionTime}ms`; particlesFunc = window.createFireworks; break; case 'incorrect': iconSVG = crossSVG; textHTML = '诶哟，答错了'; particlesFunc = window.createFailureSparks; break; case 'missed': iconSVG = blackCrossSVG; textHTML = '哎呀，漏答了'; particlesFunc = window.createFailureSparks; break; } feedbackIcon.innerHTML = iconSVG; feedbackText.innerHTML = textHTML; if (particlesFunc) particlesFunc(); setElementVisibility(feedbackContainer); }
             function updateMainTimer() { timeLeft--; if (timeLeft < 0) { timeLeft = 0; } updateAllDisplays(); if (timeLeft <= 0 && gameActive) { endGame(); } }
             function updateAllDisplays() { correctCountSpan.textContent = correctCount; incorrectCountSpan.textContent = incorrectCount; missedCountSpan.textContent = missedCount; const totalTrials = correctCount + incorrectCount + missedCount; accuracySpan.textContent = totalTrials > 0 ? `${((correctCount / totalTrials) * 100).toFixed(1)}%` : '--'; avgReactionTimeSpan.textContent = correctCount > 0 ? `${Math.round(totalReactionTime / correctCount)} ms` : '--'; mainTimerDisplay.textContent = `${String(Math.floor(timeLeft/60)).padStart(2,'0')}:${String(timeLeft%60).padStart(2,'0')}`; }
@@ -350,7 +321,6 @@
             init();
         });
 
-        // Background particle animation Javascript (No Change)
         (function() {
             const bgCanvas=document.getElementById('particle-canvas'),bgCtx=bgCanvas.getContext('2d');bgCanvas.width=window.innerWidth;bgCanvas.height=window.innerHeight;let bgParticles;class BgParticle{constructor(x,y,dX,dY,s,c){this.x=x;this.y=y;this.dirX=dX;this.dirY=dY;this.size=s;this.color=c;}draw(){bgCtx.beginPath();bgCtx.arc(this.x,this.y,this.size,0,Math.PI*2,false);bgCtx.fillStyle=this.color;bgCtx.fill();}update(){if(this.x>bgCanvas.width||this.x<0)this.dirX=-this.dirX;if(this.y>bgCanvas.height||this.y<0)this.dirY=-this.dirY;this.x+=this.dirX;this.y+=this.dirY;this.draw();}}
             function initBg(){bgParticles=[];let n=(bgCanvas.height*bgCanvas.width)/9e3;for(let i=0;i<n;i++){let s=Math.random()*2+1,x=Math.random()*(innerWidth-s*2)+s*2,y=Math.random()*(innerHeight-s*2)+s*2,dX=(Math.random()*.4)-.2,dY=(Math.random()*.4)-.2,c='rgba(0,194,255,0.2)';bgParticles.push(new BgParticle(x,y,dX,dY,s,c));}}
