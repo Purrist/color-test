@@ -9,7 +9,6 @@
         :root {
             --primary-bg: #101018;
             --panel-bg-container: rgba(22, 22, 26, 0.7);
-            /* 在这里修改整个项目的主色调 (辉光蓝) */
             --glow-color: #00aaff;
             --primary-text: #e8effc;
             --secondary-text: #7a8aa8;
@@ -119,50 +118,66 @@
         #modal-confirm { background-color: var(--incorrect-color); color: #fff; }
         #modal-cancel { background-color: #555; color: var(--primary-text); }
 
+
+        /* 
+        ==================================================================
+        --- 手机端布局 “代码地图” (Mobile Responsive Styles) ---
+        ==================================================================
+        */
         @media (max-width: 768px) {
             :root { font-size: calc(9px + 0.5vw); }
 
-            /*
-            =================================================
-            --- 手机端垂直布局“总控制中心” ---
-            在这里调整手机端整体元素的垂直分布
-            =================================================
-            */
             #game-screen {
-                /* 使用Flexbox进行布局 */
                 display: flex;
                 flex-direction: column;
                 padding: 1rem;
-
-                /* 控制项 1: 垂直间距 (单位可以是 rem, px, vh) */
-                /* 这是每个大区块（进度条、核心区、底部）之间的固定间距 */
                 gap: 1.5rem;
-
-                /* 控制项 2: 整体垂直对齐 (修改这里来控制高度！) */
-                /* 可选值: center, space-between, space-around, flex-start, flex-end */
                 justify-content: center; 
             }
             
             .bottom-bar #options-container-desktop { display: none; }
-            .top-bar, .main-content-grid, .bottom-bar { width: 100%; }
+            .top-bar, .main-content-grid, .bottom-bar { width: 100%; flex-shrink: 0; }
 
-            /* 核心内容区内部依然使用Grid，方便排列统计数据 */
+            /* --- 模块 1: 倒计时进度条 --- */
+            .top-bar {
+                /* 在这里调整与屏幕顶部的距离 (去掉注释即可生效) */
+                margin-top: 2vh;
+            }
+
+            /* --- 模块 2: 核心内容区 (包含颜色字、按钮、统计数据) --- */
             .main-content-grid {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
-                /* 在这里自由调整核心内容区内部元素的上下顺序 */
                 grid-template-areas:
                     "main-word main-word"
                     "options options"
                     "correct accuracy"
                     "incorrect avg-rt"
                     "missed .";
+                /* 在这里调整统计数据的行间距 (第一个值) */
                 gap: 1.2rem 1.5rem;
-                flex-grow: 0; /* 防止它过度伸展 */
             }
             
-            .word-display-area { grid-area: main-word; }
-            #options-container { display: flex; grid-area: options; justify-content: center; gap: 0.8rem; }
+            /* --- 子模块 2.0: 颜色字区域 --- */
+            .word-display-area { 
+                grid-area: main-word; 
+                /* 在这里调整与上方进度条、下方按钮的距离 (去掉注释即可生效) */
+                /* margin-bottom: 2rem; */ /* 增加与下方按钮的距离 */
+                margin-top: -10rem;   /* 使用负外边距强行上移 */
+            }
+            
+            /* --- 子模块 2.1: 五个按钮 --- */
+            #options-container { 
+                display: flex; 
+                grid-area: options; 
+                justify-content: center; 
+                gap: 0.8rem; 
+                margin-top: -14rem;
+                /* 在这里调整与下方统计数据的距离 (去掉注释即可生效) */
+                /* margin-bottom: 2rem; */
+            }
+
+            /* --- 子模块 2.2: 统计数据面板 (通过 .main-content-grid 的 gap 控制) --- */
             .stats-column { display: contents; }
             .stats-column.left-stats .stat-item:nth-child(1) { grid-area: correct; }
             .stats-column.left-stats .stat-item:nth-child(2) { grid-area: incorrect; }
@@ -178,7 +193,12 @@
             #stroop-word { font-size: 5rem; }
             #feedback-icon { width: 4rem; height: 4rem; }
 
-            .bottom-bar { justify-content: space-around; }
+            /* --- 模块 3: 底部栏 (两分钟倒计时 & 重新开始) --- */
+            .bottom-bar { 
+                justify-content: space-around;
+                /* 在这里调整与屏幕底部的距离 (去掉注释即可生效) */
+                margin-bottom: 3vh;
+            }
             #main-timer-display, #restart-button { margin: 0; }
             .option-btn { width: 50px; height: 50px; font-size: 1rem; }
         }
@@ -278,7 +298,6 @@
 
                 startButton.addEventListener('click', startGame);
                 restartButton.addEventListener('click', () => confirmationModal.classList.add('visible'));
-                // FIXED: Now calls returnToWelcome() to correctly go to the home screen.
                 modalConfirmBtn.addEventListener('click', () => { 
                     confirmationModal.classList.remove('visible'); 
                     returnToWelcome(); 
