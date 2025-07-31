@@ -8,7 +8,7 @@
         /* --- Root Variables and Basic Settings --- */
         :root {
             --primary-bg: #101018;
-            --panel-bg-container: rgba(22, 22, 26, 0.7);
+            --panel-bg-container: rgba(16, 16, 24, 0.7); /* Darker for more contrast */
             --glow-color: #00aaff;
             --primary-text: #e8effc;
             --secondary-text: #7a8aa8;
@@ -17,6 +17,27 @@
             --font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
             font-size: calc(10px + 0.5vw);
         }
+
+        /* --- (V-MAX) Keyframe Animations --- */
+        @keyframes text-flicker {
+            0%, 100% { text-shadow: 0 0 7px var(--glow-color), 0 0 10px var(--glow-color), 0 0 21px var(--glow-color); }
+            50% { text-shadow: 0 0 10px var(--glow-color), 0 0 30px rgba(0, 170, 255, 0.5); }
+        }
+        @keyframes scanline {
+            0% { transform: translateY(-5%); }
+            100% { transform: translateY(5%); }
+        }
+        @keyframes progress-bar-danger-pulse {
+            0% { box-shadow: 0 0 5px #ff397a, 0 0 10px #ff397a; }
+            50% { box-shadow: 0 0 15px #ff397a, 0 0 30px #ff397a; }
+            100% { box-shadow: 0 0 5px #ff397a, 0 0 10px #ff397a; }
+        }
+        @keyframes glitch {
+            2%,64%{ transform: translate(2px,0) skew(0deg); }
+            4%,60%{ transform: translate(-2px,0) skew(0deg); }
+            62%{ transform: translate(0,0) skew(5deg); }
+        }
+
         body {
             background-color: var(--primary-bg);
             color: var(--primary-text);
@@ -27,8 +48,22 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            background-image: radial-gradient(circle, transparent 50%, rgba(0,0,0,0.7) 100%);
         }
-        #particle-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
+
+        /* --- (V-MAX) New Canvas Layers --- */
+        .fullscreen-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        #smoke-canvas { z-index: -2; opacity: 0.3; }
+        #particle-canvas { z-index: -1; }
+        #foreground-canvas { z-index: 5; }
+
         .panel-container {
             width: 90vw; height: 90vh; max-width: 1200px; max-height: 750px;
             background: var(--panel-bg-container);
@@ -38,6 +73,17 @@
             box-shadow: 0 0 50px rgba(0, 194, 255, 0.1), inset 0 0 10px rgba(0, 194, 255, 0.1);
             position: relative; overflow: hidden; display: flex;
         }
+        .panel-container::after {
+            content: '';
+            position: absolute;
+            top: -50%; left: 0;
+            width: 100%; height: 200%;
+            background: repeating-linear-gradient(to bottom, rgba(255,255,255,0.02) 0, rgba(255,255,255,0.02) 1px, transparent 1px, transparent 4px);
+            animation: scanline 2.5s linear infinite;
+            pointer-events: none;
+            opacity: 0.5;
+        }
+
         .screen {
             position: absolute; width: 100%; height: 100%;
             display: flex; flex-direction: column;
@@ -48,9 +94,11 @@
         }
         .screen.visible { opacity: 1; transform: scale(1); pointer-events: auto; }
 
-        /* --- Welcome Screen --- */
         #welcome-screen { gap: 1.5rem; text-align: center; }
-        .main-title { font-size: 2.5rem; font-weight: 700; color: #fff; text-shadow: 0 0 15px var(--glow-color); }
+        .main-title { 
+            font-size: 2.5rem; font-weight: 700; color: #fff;
+            animation: text-flicker 3s infinite;
+        }
         .instructions-text { font-size: 1.1rem; color: var(--secondary-text); max-width: 50ch; line-height: 1.7; }
         #emoji { width: 7rem; height: 7rem; margin: 0.5rem 0; }
         #start-button {
@@ -61,14 +109,23 @@
         }
         #start-button:hover { transform: translateY(-4px) scale(1.03); box-shadow: 0 8px 25px rgba(0, 170, 255, 0.7); }
 
-        /* --- Game Screen Base Layout (PC/Tablet) --- */
         #game-screen {
             display: flex; flex-direction: column; align-items: stretch;
             gap: 1.5rem; padding: 2rem 3rem;
         }
         .top-bar { width: 100%; height: 6px; background-color: rgba(255,255,255,0.1); border-radius: 3px; }
-        #trial-progress-bar { width: 100%; height: 100%; background-color: var(--glow-color); border-radius: 3px; transition: width 0.1s linear, background-color 0.2s linear; opacity: 0; }
+        #trial-progress-bar { 
+            width: 100%; height: 100%; border-radius: 3px; 
+            transition: width 0.1s linear, background-color 0.2s ease; opacity: 0;
+            background: linear-gradient(90deg, var(--glow-color), #39ff84);
+            box-shadow: 0 0 8px var(--glow-color);
+        }
         #trial-progress-bar.visible { opacity: 1; }
+        /* (V-MAX) Danger zone pulse effect */
+        #trial-progress-bar.danger {
+            background: var(--incorrect-color);
+            animation: progress-bar-danger-pulse 0.5s infinite;
+        }
         
         .main-content-grid {
             display: grid; grid-template-columns: 1fr 1.5fr 1fr; grid-template-rows: 1fr;
@@ -80,7 +137,7 @@
         .stat-item .label { font-size: 1rem; color: var(--secondary-text); margin-top: 0.5rem; display: block; }
         
         .word-display-area { position: relative; display: flex; justify-content: center; align-items: center; height: 100%; }
-        #feedback-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+        #feedback-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
         .centered-element {
             position: absolute; opacity: 0; transform: scale(0.9); transition: opacity 0.2s ease, transform 0.2s ease;
             text-align: center; display: flex; justify-content: center; align-items: center;
@@ -89,14 +146,18 @@
         .centered-element.visible { opacity: 1; transform: scale(1); }
         .word-box { border: 1px solid rgba(0, 194, 255, 0.2); border-radius: 20px; box-shadow: 0 0 25px rgba(0, 194, 255, 0.15); }
         #fixation-cross { font-size: 7rem; font-weight: 900; color: var(--secondary-text); }
-        #stroop-word { font-size: 8rem; font-weight: 900; }
+        #stroop-word { 
+            font-size: 8rem; font-weight: 900; 
+            /* (V-MAX) Glitch effect on the word */
+            animation: glitch 1s infinite;
+        }
         #feedback-container { flex-direction: column; font-size: 1.2rem; gap: 1rem; }
         #feedback-icon { width: 5rem; height: 5rem; }
         
         #options-container { display: none; }
 
         .bottom-bar { display: flex; justify-content: space-between; align-items: center; }
-        #main-timer-display { font-size: 1.8rem; font-weight: 600; color: var(--primary-text); margin-left: 6rem; }
+        #main-timer-display { font-size: 1.8rem; font-weight: 600; color: var(--primary-text); margin-left: 6rem; animation: text-flicker 5s infinite; }
         #restart-button {
             font-size: 1rem; font-weight: bold; color: var(--primary-text); background-color: #4a4a52; padding: 0.7rem 1.5rem;
             border-radius: 10px; border: none; cursor: pointer; transition: all 0.2s ease; margin-right: 5rem;
@@ -105,20 +166,17 @@
         
         .bottom-bar #options-container-desktop { display: flex; gap: 1rem; justify-content: center; flex-grow: 1; }
         
-        /* --- (核心优化) 按钮交互效果 --- */
         .option-btn {
             width: 65px; height: 65px; font-size: 1.2rem; color: var(--primary-text); background-color: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 15px; cursor: pointer;
             box-shadow: inset 0 0 5px rgba(0, 194, 255, 0.1);
-            -webkit-tap-highlight-color: transparent; /* (修复丑陋方框) 彻底禁用移动端点击时的默认灰色/蓝色方框 */
-            transition: all 0.15s ease-out; /* 优化过渡效果 */
+            -webkit-tap-highlight-color: transparent;
+            transition: all 0.15s ease-out;
         }
-        /* “按下”效果: 适用于所有设备 (触摸和鼠标)，提供即时反馈 */
         .option-btn:active {
             transform: scale(0.95);
             background-color: rgba(0, 170, 255, 0.15);
         }
-        /* (光效升级 & 修复粘滞) “悬停”光效: 只在能真正悬停的设备(鼠标)上生效 */
         @media (hover: hover) and (pointer: fine) {
             .option-btn:hover {
                 transform: translateY(-3px);
@@ -138,23 +196,15 @@
         #modal-confirm { background-color: var(--incorrect-color); color: #fff; }
         #modal-cancel { background-color: #555; color: var(--primary-text); }
 
-        /* 
-        ==================================================================
-        --- 手机端布局 “代码地图” (Mobile Responsive Styles) ---
-        ==================================================================
-        */
         @media (max-width: 768px) {
             :root { font-size: calc(9px + 0.5vw); }
-
             #game-screen {
                 display: flex; flex-direction: column; padding: 1rem;
                 gap: 1.5rem; justify-content: center; 
             }
-            
             .bottom-bar #options-container-desktop { display: none; }
             .top-bar, .main-content-grid, .bottom-bar { width: 100%; flex-shrink: 0; }
             .top-bar { margin-top: 2vh; }
-
             .main-content-grid {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
@@ -166,67 +216,47 @@
                 gap: 1.2rem 1.5rem;
                 position: relative;
             }
-            
-            .word-display-area { 
-                grid-area: main-word; 
-                margin-top: -11rem;
-            }
-            
+            .word-display-area { grid-area: main-word; margin-top: -11rem; }
             #options-container { 
-                display: flex; 
-                justify-content: center; 
-                gap: 0.8rem; 
-                position: absolute;
-                width: 100%;
-                left: 50%;
-                transform: translateX(-50%);
-                top: 28rem;
-                z-index: 2;
+                display: flex; justify-content: center; gap: 0.8rem; 
+                position: absolute; width: 100%; left: 50%;
+                transform: translateX(-50%); top: 28rem; z-index: 2;
             }
-
             .stats-column { display: contents; }
-            
-            .stats-column .stat-item {
-                transform: translateY(-3rem); 
-            }
-
+            .stats-column .stat-item { transform: translateY(-3rem); }
             .stats-column.left-stats .stat-item:nth-child(1) { grid-area: correct; }
             .stats-column.left-stats .stat-item:nth-child(2) { grid-area: incorrect; }
             .stats-column.left-stats .stat-item:nth-child(3) { grid-area: missed; }
             .stats-column.right-stats .stat-item:nth-child(1) { grid-area: accuracy; }
             .stats-column.right-stats .stat-item:nth-child(2) { grid-area: avg-rt; }
-
             .stat-item { gap: 0; }
             .stat-item .value { font-size: 1.5rem; }
             .stat-item .label { font-size: 0.8rem; margin-top: 0.25rem; }
-            
             .centered-element { width: 70%; }
             #stroop-word { font-size: 5rem; }
             #feedback-icon { width: 4rem; height: 4rem; }
-
-            .bottom-bar { 
-                justify-content: space-around;
-                margin-bottom: 3vh;
-            }
+            .bottom-bar { justify-content: space-around; margin-bottom: 3vh; }
             #main-timer-display, #restart-button { margin: 0; }
             .option-btn { width: 50px; height: 50px; font-size: 1rem; }
         }
     </style>
 </head>
 <body>
-    <canvas id="particle-canvas"></canvas>
+    <!-- (V-MAX) New Canvas Layers for atmospheric effects -->
+    <canvas id="smoke-canvas" class="fullscreen-canvas"></canvas>
+    <canvas id="particle-canvas" class="fullscreen-canvas"></canvas>
+    <canvas id="foreground-canvas" class="fullscreen-canvas"></canvas>
+
     <div class="panel-container">
+        <!-- ... rest of your panel container HTML ... -->
         <div id="welcome-screen" class="screen visible">
              <h1 class="main-title">色词匹配 · 极限挑战</h1>
             <img id="emoji" src="{{ url_for('static', filename='asset/emoji.gif') }}" alt="动态表情">
             <p class="instructions-text">反应力挑战！你需要选择文字呈现的颜色，而不是文字的内容，每题仅有2秒反应时间，看看你能在两分钟内答对多少吧！</p>
             <button id="start-button">开始挑战</button>
         </div>
-
         <div id="game-screen" class="screen">
-            <div class="top-bar">
-                <div id="trial-progress-bar"></div>
-            </div>
+            <div class="top-bar"><div id="trial-progress-bar"></div></div>
             <div class="main-content-grid">
                 <div class="stats-column left-stats">
                     <div class="stat-item"><span class="value" id="correct-count">0</span><span class="label">答对</span></div>
@@ -254,7 +284,6 @@
                 <button id="restart-button">重新开始</button>
             </div>
         </div>
-        
         <div id="confirmation-modal" class="screen modal">
             <div class="modal-content">
                 <h3 class="modal-title">确定要重新开始吗？</h3>
@@ -265,7 +294,6 @@
             </div>
         </div>
     </div>
-
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const welcomeScreen = document.getElementById('welcome-screen'), gameScreen = document.getElementById('game-screen');
@@ -279,20 +307,13 @@
             const optionsContainer = document.getElementById('options-container');
             const optionsContainerDesktop = document.getElementById('options-container-desktop');
             const confirmationModal = document.getElementById('confirmation-modal'), modalConfirmBtn = document.getElementById('modal-confirm'), modalCancelBtn = document.getElementById('modal-cancel');
-            
             const checkmarkSVG = `<path fill="none" stroke="var(--correct-color)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" d="M20,50 L40,70 L80,30" />`;
             const crossSVG = `<path fill="none" stroke="var(--incorrect-color)" stroke-width="8" stroke-linecap="round" d="M20,20 L80,80 M80,20 L20,80" />`;
             const blackCrossSVG = `<path fill="none" stroke="var(--secondary-text)" stroke-width="8" stroke-linecap="round" d="M20,20 L80,80 M80,20 L20,80" />`;
-
-            const GAME_DURATION = 120;
-            const TRIAL_DURATION = 2000;
-            const FEEDBACK_DURATION = 500;
-            const FIXATION_DURATION = 500;
-            
+            const GAME_DURATION = 120, TRIAL_DURATION = 2000, FEEDBACK_DURATION = 500, FIXATION_DURATION = 500;
             const WORDS = ['红', '黄', '绿', '蓝', '白'], COLORS = { '红': 'red', '黄': 'gold', '绿': 'green', '蓝': 'blue', '白': 'white' };
             let correctCount, incorrectCount, missedCount, totalReactionTime, timeLeft, trialStartTime, gameActive = false;
             let mainGameTimer, trialInterval, mainTimeout;
-
             function init() {
                 [optionsContainer, optionsContainerDesktop].forEach(container => {
                     container.innerHTML = '';
@@ -304,30 +325,15 @@
                         container.appendChild(btn);
                     });
                 });
-
                 startButton.addEventListener('click', startGame);
                 restartButton.addEventListener('click', () => confirmationModal.classList.add('visible'));
-                modalConfirmBtn.addEventListener('click', () => { 
-                    confirmationModal.classList.remove('visible'); 
-                    returnToWelcome(); 
-                });
+                modalConfirmBtn.addEventListener('click', () => { confirmationModal.classList.remove('visible'); returnToWelcome(); });
                 modalCancelBtn.addEventListener('click', () => confirmationModal.classList.remove('visible'));
-                
-                // (核心优化) 还原为最简洁的事件监听，由纯CSS处理所有交互效果
-                document.querySelectorAll('.option-btn').forEach(button => {
-                    button.addEventListener('click', e => handleResponse(e, false));
-                });
+                document.querySelectorAll('.option-btn').forEach(button => { button.addEventListener('click', e => handleResponse(e, false)); });
             }
-
             function clearAllTimers() { clearInterval(mainGameTimer); clearInterval(trialInterval); clearTimeout(mainTimeout); }
             function switchScreen(hide, show) { hide.classList.remove('visible'); setTimeout(() => show.classList.add('visible'), 500); }
-            
-            function returnToWelcome() {
-                gameActive = false;
-                clearAllTimers();
-                switchScreen(gameScreen, welcomeScreen);
-            }
-
+            function returnToWelcome() { gameActive = false; clearAllTimers(); switchScreen(gameScreen, welcomeScreen); }
             function startGame() {
                 clearAllTimers();
                 switchScreen(welcomeScreen, gameScreen);
@@ -337,7 +343,6 @@
                 mainGameTimer = setInterval(updateMainTimer, 1000);
                 prepareNextRound();
             }
-            
             function endGame() {
                 gameActive = false;
                 clearAllTimers();
@@ -345,35 +350,133 @@
                 feedbackIcon.innerHTML = '';
                 feedbackText.innerHTML = `挑战结束！<br>最终得分：${correctCount}`;
             }
-
             function setElementVisibility(visibleElement) { [fixationCross, stroopWord, feedbackContainer].forEach(el => el.classList.toggle('visible', el === visibleElement)); }
             function prepareNextRound() { if (!gameActive) return; setElementVisibility(null); feedbackContainer.classList.remove('visible'); mainTimeout = setTimeout(() => { setElementVisibility(fixationCross); mainTimeout = setTimeout(showStimulus, FIXATION_DURATION); }, 10); }
             function showStimulus() { if (!gameActive) return; setElementVisibility(null); let randomWordText, randomColorValue; const colorValues = Object.values(COLORS); randomWordText = WORDS[Math.floor(Math.random() * WORDS.length)]; let tempColor; do { tempColor = colorValues[Math.floor(Math.random() * colorValues.length)]; } while (tempColor === COLORS[randomWordText]); randomColorValue = tempColor; stroopWord.innerHTML = `<span>${randomWordText}</span>`; stroopWord.querySelector('span').style.color = randomColorValue; setElementVisibility(stroopWord); startTrialTimer(); trialStartTime = performance.now(); }
-            function startTrialTimer() { clearInterval(trialInterval); trialProgressBar.classList.remove('flashing-slow', 'flashing-fast'); trialProgressBar.classList.add('visible'); let timeLeftInTrial = TRIAL_DURATION; const timerStep = 20; trialProgressBar.style.transition = 'none'; trialProgressBar.style.width = '100%'; trialProgressBar.style.backgroundColor = 'hsl(120, 100%, 50%)'; setTimeout(() => { trialInterval = setInterval(() => { timeLeftInTrial -= timerStep; const progress = Math.max(0, timeLeftInTrial / TRIAL_DURATION); trialProgressBar.style.width = `${progress * 100}%`; const hue = 120 * progress; trialProgressBar.style.backgroundColor = `hsl(${hue}, 100%, 50%)`; if (progress < 0.25) { trialProgressBar.classList.add('flashing-fast'); trialProgressBar.classList.remove('flashing-slow'); } else if (progress < 0.5) { trialProgressBar.classList.add('flashing-slow'); } if (timeLeftInTrial <= 0) handleResponse(null, true); }, timerStep); }, 20); }
-            function handleResponse(event, isTimeout) { if (!trialStartTime) return; const reactionTime = Math.round(performance.now() - trialStartTime); clearInterval(trialInterval); trialStartTime = 0; stroopWord.classList.remove('visible'); trialProgressBar.classList.remove('visible', 'flashing-fast', 'flashing-slow'); let status = 'incorrect'; if (isTimeout) { status = 'missed'; missedCount++; } else { const isCorrect = event.target.dataset.color === stroopWord.querySelector('span').style.color; if (isCorrect) { status = 'correct'; correctCount++; totalReactionTime += reactionTime; } else { incorrectCount++; } } showFeedback(status, reactionTime); updateAllDisplays(); if(gameActive) { mainTimeout = setTimeout(prepareNextRound, FEEDBACK_DURATION); } }
+            function startTrialTimer() {
+                clearInterval(trialInterval);
+                trialProgressBar.classList.remove('danger'); // Reset danger class
+                trialProgressBar.classList.add('visible');
+                let timeLeftInTrial = TRIAL_DURATION;
+                const timerStep = 20;
+                trialProgressBar.style.transition = 'none';
+                trialProgressBar.style.width = '100%';
+                trialProgressBar.style.background = 'linear-gradient(90deg, var(--glow-color), #39ff84)'; // Reset background
+
+                setTimeout(() => {
+                    trialInterval = setInterval(() => {
+                        timeLeftInTrial -= timerStep;
+                        const progress = Math.max(0, timeLeftInTrial / TRIAL_DURATION);
+                        trialProgressBar.style.width = `${progress * 100}%`;
+                        
+                        // (V-MAX) Danger Zone trigger
+                        if (progress < 0.3) {
+                            trialProgressBar.classList.add('danger');
+                        } else {
+                            trialProgressBar.classList.remove('danger');
+                            trialProgressBar.style.background = `linear-gradient(90deg, hsl(${120 * progress}, 100%, 50%), #39ff84)`;
+                        }
+
+                        if (timeLeftInTrial <= 0) handleResponse(null, true);
+                    }, timerStep);
+                }, 20);
+            }
+            function handleResponse(event, isTimeout) { if (!trialStartTime) return; const reactionTime = Math.round(performance.now() - trialStartTime); clearInterval(trialInterval); trialStartTime = 0; stroopWord.classList.remove('visible'); trialProgressBar.classList.remove('visible', 'danger'); let status = 'incorrect'; if (isTimeout) { status = 'missed'; missedCount++; } else { const isCorrect = event.target.dataset.color === stroopWord.querySelector('span').style.color; if (isCorrect) { status = 'correct'; correctCount++; totalReactionTime += reactionTime; } else { incorrectCount++; } } showFeedback(status, reactionTime); updateAllDisplays(); if(gameActive) { mainTimeout = setTimeout(prepareNextRound, FEEDBACK_DURATION); } }
             function showFeedback(status, reactionTime) { setElementVisibility(null); let iconSVG, textHTML, particlesFunc; switch(status) { case 'correct': iconSVG = checkmarkSVG; textHTML = `真棒，答对啦！<br>你的反应时间为${reactionTime}ms`; particlesFunc = window.createFireworks; break; case 'incorrect': iconSVG = crossSVG; textHTML = '诶哟，答错了'; particlesFunc = window.createFailureSparks; break; case 'missed': iconSVG = blackCrossSVG; textHTML = '哎呀，漏答了'; particlesFunc = window.createFailureSparks; break; } feedbackIcon.innerHTML = iconSVG; feedbackText.innerHTML = textHTML; if (particlesFunc) particlesFunc(); setElementVisibility(feedbackContainer); }
             function updateMainTimer() { timeLeft--; if (timeLeft < 0) { timeLeft = 0; } updateAllDisplays(); if (timeLeft <= 0 && gameActive) { endGame(); } }
             function updateAllDisplays() { correctCountSpan.textContent = correctCount; incorrectCountSpan.textContent = incorrectCount; missedCountSpan.textContent = missedCount; const totalTrials = correctCount + incorrectCount + missedCount; accuracySpan.textContent = totalTrials > 0 ? `${((correctCount / totalTrials) * 100).toFixed(1)}%` : '--'; avgReactionTimeSpan.textContent = correctCount > 0 ? `${Math.round(totalReactionTime / correctCount)} ms` : '--'; mainTimerDisplay.textContent = `${String(Math.floor(timeLeft/60)).padStart(2,'0')}:${String(timeLeft%60).padStart(2,'0')}`; }
-            
             init();
         });
 
+        /* --- (V-MAX) Fullscreen Canvas Effects --- */
         (function() {
-            const bgCanvas=document.getElementById('particle-canvas'),bgCtx=bgCanvas.getContext('2d');bgCanvas.width=window.innerWidth;bgCanvas.height=window.innerHeight;let bgParticles;class BgParticle{constructor(x,y,dX,dY,s,c){this.x=x;this.y=y;this.dirX=dX;this.dirY=dY;this.size=s;this.color=c;}draw(){bgCtx.beginPath();bgCtx.arc(this.x,this.y,this.size,0,Math.PI*2,false);bgCtx.fillStyle=this.color;bgCtx.fill();}update(){if(this.x>bgCanvas.width||this.x<0)this.dirX=-this.dirX;if(this.y>bgCanvas.height||this.y<0)this.dirY=-this.dirY;this.x+=this.dirX;this.y+=this.dirY;this.draw();}}
-            function initBg(){bgParticles=[];let n=(bgCanvas.height*bgCanvas.width)/9e3;for(let i=0;i<n;i++){let s=Math.random()*2+1,x=Math.random()*(innerWidth-s*2)+s*2,y=Math.random()*(innerHeight-s*2)+s*2,dX=(Math.random()*.4)-.2,dY=(Math.random()*.4)-.2,c='rgba(0,194,255,0.2)';bgParticles.push(new BgParticle(x,y,dX,dY,s,c));}}
-            function connectBg(){for(let a=0;a<bgParticles.length;a++){for(let b=a;b<bgParticles.length;b++){let d=(bgParticles[a].x-bgParticles[b].x)**2+(bgParticles[a].y-bgParticles[b].y)**2;if(d<(bgCanvas.width/7)*(bgCanvas.height/7)){let o=1-(d/2e4);bgCtx.strokeStyle=`rgba(0,194,255,${o*0.3})`;bgCtx.lineWidth=1;bgCtx.beginPath();bgCtx.moveTo(bgParticles[a].x,bgParticles[a].y);bgCtx.lineTo(bgParticles[b].x,bgParticles[b].y);bgCtx.stroke();}}}}
-            function animateBg(){requestAnimationFrame(animateBg);bgCtx.clearRect(0,0,innerWidth,innerHeight);bgParticles.forEach(p=>p.update());connectBg();}
-            window.addEventListener('resize',()=>{bgCanvas.width=innerWidth;bgCanvas.height=innerHeight;initBg();});initBg();animateBg();
-            const fbCanvas=document.getElementById('feedback-canvas'),fbCtx=fbCanvas.getContext('2d');let effectParticles=[];
-            class EffectParticle{constructor(x,y,c,v,p){this.x=x;this.y=y;this.color=c;this.velocity=v;this.alpha=1;this.friction=p.friction;this.gravity=p.gravity;this.size=Math.random()*2+1;}}
-            EffectParticle.prototype.draw=function(){fbCtx.save();fbCtx.globalAlpha=this.alpha;fbCtx.beginPath();fbCtx.arc(this.x,this.y,this.size,0,Math.PI*2);fbCtx.fillStyle=this.color;fbCtx.fill();fbCtx.restore();}
-            EffectParticle.prototype.update=function(){this.draw();this.velocity.x*=this.friction;this.velocity.y*=this.friction;this.velocity.y+=this.gravity;this.x+=this.velocity.x;this.y+=this.velocity.y;this.alpha-=.02;}
-            const resizeFbCanvas=()=>{const a=document.querySelector('.word-display-area');if(a&&a.clientWidth>0){fbCanvas.width=a.clientWidth;fbCanvas.height=a.clientHeight;}};
-            function createEffect(x,y,colors,physics,count){for(let i=0;i<count;i++){const c=colors[Math.floor(Math.random()*colors.length)],a=Math.random()*Math.PI*2,p=Math.random()*5+2;effectParticles.push(new EffectParticle(x,y,c,{x:Math.cos(a)*p,y:Math.sin(a)*p},physics));}}
-            window.createFireworks=()=>{const x=fbCanvas.width/2,y=fbCanvas.height/2,c=['#ffdd00','#ff4757','#39ff84','#00aaff','#a259ff'];createEffect(x,y,c,{friction:.98,gravity:.05}, 100);}
-            window.createFailureSparks=()=>{const x=fbCanvas.width/2,y=fbCanvas.height/2,c=['#555','#444','#333'];createEffect(x,y,c,{friction:.97,gravity:.02}, 50);}
-            function animateFb(){requestAnimationFrame(animateFb);fbCtx.clearRect(0,0,fbCanvas.width,fbCanvas.height);effectParticles.forEach((p,i)=>{p.alpha<=0?effectParticles.splice(i,1):p.update();});}
-            window.addEventListener('resize',resizeFbCanvas);setTimeout(resizeFbCanvas,100);animateFb();
+            // Setup for all canvases
+            const smokeCanvas = document.getElementById('smoke-canvas'), smokeCtx = smokeCanvas.getContext('2d');
+            const bgCanvas = document.getElementById('particle-canvas'), bgCtx = bgCanvas.getContext('2d');
+            const fgCanvas = document.getElementById('foreground-canvas'), fgCtx = fgCanvas.getContext('2d');
+            const fbCanvas = document.getElementById('feedback-canvas'), fbCtx = fbCanvas.getContext('2d');
+
+            function resizeCanvases() {
+                const w = window.innerWidth, h = window.innerHeight;
+                [smokeCanvas, bgCanvas, fgCanvas].forEach(c => { c.width = w; c.height = h; });
+                const a = document.querySelector('.word-display-area');
+                if (a && a.clientWidth > 0) { fbCanvas.width = a.clientWidth; fbCanvas.height = a.clientHeight; }
+            }
+            window.addEventListener('resize', resizeCanvases);
+            setTimeout(resizeCanvases, 100);
+
+            // Layer 0: Psychedelic Smoke
+            let smokeParticles = [];
+            for (let i = 0; i < 5; i++) {
+                smokeParticles.push({
+                    x: Math.random() * smokeCanvas.width,
+                    y: Math.random() * smokeCanvas.height,
+                    vx: (Math.random() - 0.5) * 0.2,
+                    vy: (Math.random() - 0.5) * 0.2,
+                    size: Math.random() * 200 + 150,
+                    color: `rgba(${Math.random() * 50}, ${Math.random() * 100 + 100}, ${Math.random() * 100 + 155}, 0.5)`
+                });
+            }
+            function animateSmoke() {
+                smokeCtx.clearRect(0, 0, smokeCanvas.width, smokeCanvas.height);
+                smokeCtx.filter = 'blur(100px)';
+                smokeParticles.forEach(p => {
+                    p.x += p.vx; p.y += p.vy;
+                    if (p.x < 0 || p.x > smokeCanvas.width) p.vx *= -1;
+                    if (p.y < 0 || p.y > smokeCanvas.height) p.vy *= -1;
+                    smokeCtx.beginPath();
+                    smokeCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    smokeCtx.fillStyle = p.color;
+                    smokeCtx.fill();
+                });
+                requestAnimationFrame(animateSmoke);
+            }
+
+            // Layer 1: Starfield Background (Original)
+            let bgParticles = [];
+            class BgParticle { constructor(x, y, dX, dY, s, c) { this.x = x; this.y = y; this.dirX = dX; this.dirY = dY; this.size = s; this.color = c; } draw() { bgCtx.beginPath(); bgCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false); bgCtx.fillStyle = this.color; bgCtx.fill(); } update() { if (this.x > bgCanvas.width || this.x < 0) this.dirX = -this.dirX; if (this.y > bgCanvas.height || this.y < 0) this.dirY = -this.dirY; this.x += this.dirX; this.y += this.dirY; this.draw(); } }
+            function initBg() { bgParticles = []; let n = (bgCanvas.height * bgCanvas.width) / 9e3; for (let i = 0; i < n; i++) { let s = Math.random() * 2 + 1, x = Math.random() * (innerWidth - s * 2) + s * 2, y = Math.random() * (innerHeight - s * 2) + s * 2, dX = (Math.random() * .4) - .2, dY = (Math.random() * .4) - .2, c = 'rgba(0,194,255,0.2)'; bgParticles.push(new BgParticle(x, y, dX, dY, s, c)); } }
+            function connectBg() { for (let a = 0; a < bgParticles.length; a++) { for (let b = a; b < bgParticles.length; b++) { let d = (bgParticles[a].x - bgParticles[b].x) ** 2 + (bgParticles[a].y - bgParticles[b].y) ** 2; if (d < (bgCanvas.width / 7) * (bgCanvas.height / 7)) { let o = 1 - (d / 2e4); bgCtx.strokeStyle = `rgba(0,194,255,${o * 0.3})`; bgCtx.lineWidth = 1; bgCtx.beginPath(); bgCtx.moveTo(bgParticles[a].x, bgParticles[a].y); bgCtx.lineTo(bgParticles[b].x, bgParticles[b].y); bgCtx.stroke(); } } } }
+            function animateBg() { requestAnimationFrame(animateBg); bgCtx.clearRect(0, 0, innerWidth, innerHeight); bgParticles.forEach(p => p.update()); connectBg(); }
+
+            // Layer 3: Foreground Cyber-Dust
+            let fgParticles = [];
+            for (let i = 0; i < 70; i++) {
+                fgParticles.push({
+                    x: Math.random() * fgCanvas.width,
+                    y: Math.random() * fgCanvas.height,
+                    vx: (Math.random() - 0.5) * 0.3,
+                    vy: (Math.random() - 0.5) * 0.3,
+                    size: Math.random() * 1.5 + 0.5,
+                    alpha: Math.random() * 0.5 + 0.2
+                });
+            }
+            function animateFg() {
+                fgCtx.clearRect(0, 0, fgCanvas.width, fgCanvas.height);
+                fgParticles.forEach(p => {
+                    p.x += p.vx; p.y += p.vy;
+                    if (p.x < 0 || p.x > fgCanvas.width) p.vx *= -1;
+                    if (p.y < 0 || p.y > fgCanvas.height) p.vy *= -1;
+                    fgCtx.fillStyle = `rgba(0, 170, 255, ${p.alpha})`;
+                    fgCtx.fillRect(p.x, p.y, p.size, p.size);
+                });
+                requestAnimationFrame(animateFg);
+            }
+
+            // Layer 4: Feedback Explosions
+            let effectParticles = [];
+            class EffectParticle { constructor(x, y, c, v, p) { this.x = x; this.y = y; this.color = c; this.velocity = v; this.alpha = 1; this.friction = p.friction; this.gravity = p.gravity; this.size = Math.random() * p.size_modifier + 1; } draw() { fbCtx.save(); fbCtx.globalAlpha = this.alpha; fbCtx.beginPath(); fbCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2); fbCtx.fillStyle = this.color; fbCtx.fill(); fbCtx.restore(); } update() { this.draw(); this.velocity.x *= this.friction; this.velocity.y *= this.friction; this.velocity.y += this.gravity; this.x += this.velocity.x; this.y += this.velocity.y; this.alpha -= .02; } }
+            function createEffect(x, y, colors, physics, count) { for (let i = 0; i < count; i++) { const c = colors[Math.floor(Math.random() * colors.length)], a = Math.random() * Math.PI * 2, p = Math.random() * physics.power + 2; effectParticles.push(new EffectParticle(x, y, c, { x: Math.cos(a) * p, y: Math.sin(a) * p }, physics)); } }
+            window.createFireworks = () => { const x = fbCanvas.width / 2, y = fbCanvas.height / 2, c = ['#f9ff4f', '#7aff76', '#53faff', '#f576ff', '#ffffff']; createEffect(x, y, c, { friction: .97, gravity: .08, power: 8, size_modifier: 2.5 }, 150); }
+            window.createFailureSparks = () => { const x = fbCanvas.width / 2, y = fbCanvas.height / 2, c = ['var(--incorrect-color)', 'var(--secondary-text)', '#444']; createEffect(x, y, c, { friction: .95, gravity: .1, power: 6, size_modifier: 1.5 }, 200); }
+            function animateFb() { requestAnimationFrame(animateFb); fbCtx.clearRect(0, 0, fbCanvas.width, fbCanvas.height); effectParticles.forEach((p, i) => { p.alpha <= 0 ? effectParticles.splice(i, 1) : p.update(); }); }
+            
+            // Initialize all animations
+            initBg();
+            animateBg();
+            animateSmoke();
+            animateFg();
+            animateFb();
         })();
     </script>
 </body>
