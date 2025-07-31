@@ -128,57 +128,53 @@
             :root { font-size: calc(9px + 0.5vw); }
 
             #game-screen {
-                display: flex;
-                flex-direction: column;
-                padding: 1rem;
-                gap: 1.5rem;
-                justify-content: center; 
+                display: flex; flex-direction: column; padding: 1rem;
+                gap: 1.5rem; justify-content: center; 
             }
             
             .bottom-bar #options-container-desktop { display: none; }
             .top-bar, .main-content-grid, .bottom-bar { width: 100%; flex-shrink: 0; }
 
-            /* --- 模块 1: 倒计时进度条 --- */
-            .top-bar {
-                /* 在这里调整与屏幕顶部的距离 (去掉注释即可生效) */
-                margin-top: 2vh;
-            }
+            .top-bar { margin-top: 2vh; }
 
-            /* --- 模块 2: 核心内容区 (包含颜色字、按钮、统计数据) --- */
             .main-content-grid {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
                 grid-template-areas:
                     "main-word main-word"
-                    "options options"
                     "correct accuracy"
                     "incorrect avg-rt"
                     "missed .";
-                /* 在这里调整统计数据的行间距 (第一个值) */
                 gap: 1.2rem 1.5rem;
+                position: relative;
             }
             
-            /* --- 子模块 2.0: 颜色字区域 --- */
             .word-display-area { 
                 grid-area: main-word; 
-                /* 在这里调整与上方进度条、下方按钮的距离 (去掉注释即可生效) */
-                /* margin-bottom: 2rem; */ /* 增加与下方按钮的距离 */
-                margin-top: -10rem;   /* 使用负外边距强行上移 */
+                margin-top: -11rem;
             }
             
-            /* --- 子模块 2.1: 五个按钮 --- */
             #options-container { 
                 display: flex; 
-                grid-area: options; 
                 justify-content: center; 
                 gap: 0.8rem; 
-                margin-top: -14rem;
-                /* 在这里调整与下方统计数据的距离 (去掉注释即可生效) */
-                /* margin-bottom: 2rem; */
+                position: absolute;
+                width: 100%;
+                left: 50%;
+                transform: translateX(-50%);
+                top: 28rem;
+                z-index: 2;
             }
 
-            /* --- 子模块 2.2: 统计数据面板 (通过 .main-content-grid 的 gap 控制) --- */
             .stats-column { display: contents; }
+            
+            /* --- 控制开关: 只让数据面板上移 --- */
+            /* 这是移动数据面板的最终、正确方案 */
+            .stats-column .stat-item {
+                /* 使用负值将所有统计项向上移动，而不影响任何其他布局 */
+                transform: translateY(-3rem);
+            }
+
             .stats-column.left-stats .stat-item:nth-child(1) { grid-area: correct; }
             .stats-column.left-stats .stat-item:nth-child(2) { grid-area: incorrect; }
             .stats-column.left-stats .stat-item:nth-child(3) { grid-area: missed; }
@@ -193,10 +189,8 @@
             #stroop-word { font-size: 5rem; }
             #feedback-icon { width: 4rem; height: 4rem; }
 
-            /* --- 模块 3: 底部栏 (两分钟倒计时 & 重新开始) --- */
             .bottom-bar { 
                 justify-content: space-around;
-                /* 在这里调整与屏幕底部的距离 (去掉注释即可生效) */
                 margin-bottom: 3vh;
             }
             #main-timer-display, #restart-button { margin: 0; }
