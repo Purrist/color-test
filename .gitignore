@@ -1,0 +1,21 @@
+# 忽略本地运行脚本
+local_app.py
+
+# Python 缓存
+__pycache__/
+*.pyc
+
+# 虚拟环境
+venv/
+env/
+
+# VSCode 配置
+.vscode/
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 上传的临时文件或日志（可选）
+uploads/
+*.log

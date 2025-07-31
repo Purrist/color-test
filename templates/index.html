@@ -9,8 +9,8 @@
         :root {
             --primary-bg: #101018;
             --panel-bg-container: rgba(22, 22, 26, 0.7);
-            /* MODIFICATION POINT: Change this color to adjust the main blue theme */
-            --glow-color: #00aaff; /* Was #00c2ff, changed to a sky blue */
+            /* 在这里修改整个项目的主色调 (辉光蓝) */
+            --glow-color: #00aaff;
             --primary-text: #e8effc;
             --secondary-text: #7a8aa8;
             --correct-color: #39ff84;
@@ -121,29 +121,36 @@
 
         @media (max-width: 768px) {
             :root { font-size: calc(9px + 0.5vw); }
-            
-            /* MODIFICATION: The entire game screen is now a grid for full layout control */
+
+            /*
+            =================================================
+            --- 手机端垂直布局“总控制中心” ---
+            在这里调整手机端整体元素的垂直分布
+            =================================================
+            */
             #game-screen {
-                display: grid;
+                /* 使用Flexbox进行布局 */
+                display: flex;
+                flex-direction: column;
                 padding: 1rem;
-                gap: 1rem;
-                /* --- 在这里自由调整手机端整体元素的上下顺序 --- */
-                grid-template-areas:
-                    "top"    /* 计时进度条 */
-                    "main"   /* 核心内容区 (颜色字、按钮、统计数据) */
-                    "bottom";  /* 底部计时器和重新开始按钮 */
-                grid-template-rows: auto 1fr auto;
+
+                /* 控制项 1: 垂直间距 (单位可以是 rem, px, vh) */
+                /* 这是每个大区块（进度条、核心区、底部）之间的固定间距 */
+                gap: 1.5rem;
+
+                /* 控制项 2: 整体垂直对齐 (修改这里来控制高度！) */
+                /* 可选值: center, space-between, space-around, flex-start, flex-end */
+                justify-content: center; 
             }
-            .top-bar { grid-area: top; }
-            .main-content-grid { grid-area: main; }
-            .bottom-bar { grid-area: bottom; }
             
             .bottom-bar #options-container-desktop { display: none; }
+            .top-bar, .main-content-grid, .bottom-bar { width: 100%; }
 
+            /* 核心内容区内部依然使用Grid，方便排列统计数据 */
             .main-content-grid {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
-                /* --- 在这里自由调整核心内容区内部元素的上下顺序 --- */
+                /* 在这里自由调整核心内容区内部元素的上下顺序 */
                 grid-template-areas:
                     "main-word main-word"
                     "options options"
@@ -151,6 +158,7 @@
                     "incorrect avg-rt"
                     "missed .";
                 gap: 1.2rem 1.5rem;
+                flex-grow: 0; /* 防止它过度伸展 */
             }
             
             .word-display-area { grid-area: main-word; }
