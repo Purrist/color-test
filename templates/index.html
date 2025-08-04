@@ -243,7 +243,7 @@
         <div id="welcome-screen" class="screen visible">
              <h1 class="main-title">色词匹配 · 极限挑战</h1>
             <img id="emoji" src="{{ url_for('static', filename='asset/emoji.gif') }}" alt="动态表情">
-            <p class="instructions-text">反应力挑战！你需要选择文字呈现的颜色，而不是文字的内容，每题仅有2秒反应时间，看看你能在两分钟内答对多少吧！</p>
+            <p class="instructions-text">反应力挑战！你需要选择文字呈现的颜色，而不是文字的内容，每题仅有2秒反应时间，看看你能在三分钟内答对多少吧！</p>
             <button id="start-button">开始挑战</button>
         </div>
         <div id="game-screen" class="screen">
@@ -270,7 +270,7 @@
                 <div id="options-container"></div>
             </div>
             <div class="bottom-bar">
-                <span id="main-timer-display">02:00</span>
+                <span id="main-timer-display">03:00</span>
                 <div id="options-container-desktop"></div>
                 <button id="restart-button">重新开始</button>
             </div>
@@ -304,7 +304,7 @@
             const checkmarkSVG = `<path fill="none" stroke="var(--correct-color)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" d="M20,50 L40,70 L80,30" />`;
             const crossSVG = `<path fill="none" stroke="var(--incorrect-color)" stroke-width="8" stroke-linecap="round" d="M20,20 L80,80 M80,20 L20,80" />`;
             const blackCrossSVG = `<path fill="none" stroke="var(--secondary-text)" stroke-width="8" stroke-linecap="round" d="M20,20 L80,80 M80,20 L20,80" />`;
-            const GAME_DURATION = 120, TRIAL_DURATION = 2000, FEEDBACK_DURATION = 500, FIXATION_DURATION = 500;
+            const GAME_DURATION = 180, TRIAL_DURATION = 2000, FEEDBACK_DURATION = 500, FIXATION_DURATION = 500;
             const WORDS = ['红', '黄', '绿', '蓝', '白'], COLORS = { '红': 'red', '黄': 'gold', '绿': 'green', '蓝': 'blue', '白': 'white' };
             let correctCount, incorrectCount, missedCount, totalReactionTime, timeLeft, trialStartTime, gameActive = false;
             let mainGameTimer, trialInterval, mainTimeout;
