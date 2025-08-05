@@ -123,7 +123,9 @@
         }
         
         .main-content-grid {
-            display: grid; grid-template-columns: 1fr 1.5fr 1fr; grid-template-rows: 1fr;
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr; /* This was the change for left/right shift */
+            grid-template-rows: 1fr;
             flex-grow: 1; gap: 2rem; align-items: center;
         }
         .stats-column { display: flex; flex-direction: column; justify-content: center; gap: 3rem; }
@@ -150,15 +152,44 @@
         
         #options-container { display: none; }
 
-        .bottom-bar { display: flex; justify-content: space-between; align-items: center; }
-        #main-timer-display { font-size: 1.8rem; font-weight: 600; color: var(--primary-text); margin-left: 6rem; animation: text-flicker 5s infinite; }
+        /* --- KEY CHANGE #1: Bottom Bar Layout --- */
+        .bottom-bar {
+            display: flex;
+            justify-content: space-between; /* Restored to space-between */
+            align-items: center;
+            width: 100%;
+            position: relative;
+            bottom: 4vh; /* This was the change to move it up */
+        }
+
+        /* --- KEY CHANGE #2: Re-adding margins --- */
+        #main-timer-display { 
+            font-size: 1.8rem; 
+            font-weight: 600; 
+            color: var(--primary-text); 
+            margin-left: 2rem; /* Re-added margin */
+            animation: text-flicker 5s infinite; 
+        }
         #restart-button {
-            font-size: 1rem; font-weight: bold; color: var(--primary-text); background-color: #4a4a52; padding: 0.7rem 1.5rem;
-            border-radius: 10px; border: none; cursor: pointer; transition: all 0.2s ease; margin-right: 5rem;
+            font-size: 1rem; 
+            font-weight: bold; 
+            color: var(--primary-text); 
+            background-color: #4a4a52; 
+            padding: 0.7rem 1.5rem;
+            border-radius: 10px; 
+            border: none; 
+            cursor: pointer; 
+            transition: all 0.2s ease;
+            margin-right: 2rem; /* Re-added margin */
             -webkit-tap-highlight-color: transparent;
         }
         
-        .bottom-bar #options-container-desktop { display: flex; gap: 1rem; justify-content: center; flex-grow: 1; }
+        .bottom-bar #options-container-desktop { 
+            display: flex; 
+            gap: 2rem; /* This was the change to increase gap */
+            justify-content: center; 
+            flex-grow: 1; 
+        }
         
         .option-btn {
             width: 65px; height: 65px; font-size: 1.2rem; color: var(--primary-text); background-color: rgba(255, 255, 255, 0.05);
@@ -232,6 +263,20 @@
             .bottom-bar { justify-content: space-around; margin-bottom: 3vh; }
             #main-timer-display, #restart-button { margin: 0; }
             .option-btn { width: 50px; height: 50px; font-size: 1rem; }
+        }
+
+        @media (min-width: 769px) {
+            .bottom-bar #options-container-desktop .option-btn {
+                width: 80px;
+                height: 80px;
+                font-size: 2rem;
+                border-radius: 18px;
+            }
+            #options-container .option-btn {
+                width: 70px;
+                height: 70px;
+                font-size: 1.3rem;
+            }
         }
     </style>
 </head>
